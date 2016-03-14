@@ -13,6 +13,7 @@ import (
 	"github.com/evergreen-ci/evergreen/model/user"
 	"github.com/evergreen-ci/evergreen/model/version"
 	"github.com/evergreen-ci/evergreen/plugin"
+	"github.com/evergreen-ci/evergreen/util"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"log"
@@ -118,6 +119,29 @@ func withPluginUser(next http.Handler) http.HandlerFunc {
 		u := GetUser(r)
 		plugin.SetUser(u, r)
 		next.ServeHTTP(w, r)
+	}
+}
+
+// requireAdmin takes in a request handler and returns a wrapped version which verifies that requests are
+// authenticated before proceeding. For a request which is not authenticated,
+// it will be redirected to the login page instead.
+func (uis *UIServer) requireAdmin(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// get the project context
+		projCtx, err := uis.LoadProjectContext(w, r)
+		if err != nil {
+			//TODO: change this to be useful
+			uis.RedirectToLogin(w, r)
+		}
+		if user := GetUser(r); user != nil {
+			if util.SliceContains(uis.Settings.SuperUsers, user.Id) || util.SliceContains(projCtx.ProjectRef.Admins, user.Id) {
+				next(w, r)
+				return
+			}
+		}
+
+		uis.RedirectToLogin(w, r)
+		return
 	}
 }
 

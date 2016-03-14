@@ -2,6 +2,12 @@
 <script>
 window.allTrackedProjects = {{.AllProjects}}
 window.availableTriggers = {{.AvailableTriggers}}
+{{if .User}}
+ window.isSuperUser = {{IsSuperUser .User.Id}};
+ window.user = {{.User}}
+{{else}}
+ window.isSuperUser = false;
+{{end}}
 </script>
 <script type="text/javascript" src="{{Static "js" "tablesorter.js"}}"></script>
 <script type="text/javascript" src="{{Static "js" "alerts.js"}}?hash={{ StaticsMD5 }}"></script>
@@ -11,7 +17,12 @@ window.availableTriggers = {{.AvailableTriggers}}
 Evergreen Projects
 {{end}}
 {{define "content"}}
-<div id="content" class="container-fluid row" ng-controller="ProjectCtrl">
+<div id="content" class="container-fluid row" ng-controller="ProjectCtrl" ng-hide="canViewPage">
+    <div class="row" style="text-align: center; margin-top:50px;" ng-cloak>
+        <h1>Looks like you're not an admin...awkward.</h1>
+  </div>
+</div>
+<div id="content" class="container-fluid row" ng-controller="ProjectCtrl" ng-show="canViewPage">
     <div class="col-lg-2 col-lg-offset-1">
         <h1> Projects</h1>
         <div class="row">
@@ -166,6 +177,29 @@ Evergreen Projects
                   <label class="muted col-lg-offset-1">Anyone can see this project.</label>
                 </div>
               </div>
+            </div>
+        </div>
+        <div class="admins">
+            <div class="form-group">
+                <div class="col-header col-lg-4 form-control-static"> <h3> Admins </h3></div>
+            </div>
+            <div id="adminsList" class="form-group" ng-repeat="(index, admin) in settingsFormData.admins">
+                <div class="col-lg-4"> <label class="control-label">[[admin]]</label> </div>  
+                <div class="col-lg-2">
+                    <button class="btn btn-default btn-danger" id="variable-add" type="button" ng-click="removeAdmin(index)">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-lg-4">
+                    <input ng-model="admin_name" class="form-control" type="text" placeholder="username">
+                </div>
+                <div class="col-lg-2">
+                    <button class="plus-button btn btn-primary " ng-disabled="!(admin_name)" id="admin-add" type="button" ng-click="addAdmin()">
+                        <i class="fa fa-plus"></i>
+                    </button>
+                </div>
             </div>
         </div>
 

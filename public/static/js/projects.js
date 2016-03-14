@@ -2,18 +2,9 @@ mciModule.controller('ProjectCtrl', function($scope, $window, $http, $location) 
 
   $scope.availableTriggers = $window.availableTriggers
   $scope.isSuperUser = $window.isSuperUser;
+  $scope.userId = $window.user.Id
 
-  $scope.refreshTrackedProjects = function(trackedProjects) {
-    $scope.trackedProjects = trackedProjects
-    $scope.enabledProjects = _.filter($scope.trackedProjects, function(p){
-      return p.enabled;
-    });
-    $scope.disabledProjects = _.filter($scope.trackedProjects, function(p) {
-      return !(p.enabled);
-    });
-  };
 
-  $scope.refreshTrackedProjects($window.allTrackedProjects);
   $scope.projectVars = {};
   $scope.projectRef = {};
   $scope.displayName = "";
@@ -29,6 +20,37 @@ mciModule.controller('ProjectCtrl', function($scope, $window, $http, $location) 
   $scope.newProjectMessage="";
 
   $scope.isDirty = false;
+
+
+  $scope.isAdmin = function(projects) {
+   return _.reduce(projects, function(admin, project){
+    if (project&& project.admins){
+      return admin ||  _.contains(project.admins, $scope.userId)
+    }
+    return admin
+  }, false)  
+}
+
+  // refreshTrackedProjects will populate the list of projects that should be displayed 
+  // depending on the user. 
+  $scope.refreshTrackedProjects = function(trackedProjects) {
+    $scope.trackedProjects = trackedProjects
+    $scope.enabledProjects = _.filter($scope.trackedProjects, function(p){
+      if ($scope.isSuperUser || $scope.isAdmin([p])){
+        return p.enabled;
+      }
+    });
+    $scope.disabledProjects = _.filter($scope.trackedProjects, function(p) {
+      if ($scope.isSuperUser || $scope.isAdmin([p])){
+        return !(p.enabled);
+      }
+    });
+  };
+
+  $scope.refreshTrackedProjects($window.allTrackedProjects);
+  $scope.canViewPage = $scope.isSuperUser || $scope.isAdmin($scope.trackedProjects);
+
+
 
   $scope.showProject = function(project) {
     return !(project.length == 0);
@@ -84,6 +106,19 @@ mciModule.controller('ProjectCtrl', function($scope, $window, $http, $location) 
     }
   };
 
+  // addAdmin adds an admin name to the settingsFormData's list of admins
+  $scope.addAdmin = function(){
+    $scope.settingsFormData.admins.push($scope.admin_name);
+    $scope.admin_name = "";
+  }
+
+  // removeAdmin removes the username located at index
+  $scope.removeAdmin = function(index){
+    $scope.settingsFormData.admins.splice(index, 1);
+    $scope.isDirty = true;
+  }
+
+
   $scope.addProject = function() {
     $scope.modalOpen = false;
     $('#admin-modal').modal('hide');
@@ -135,6 +170,7 @@ mciModule.controller('ProjectCtrl', function($scope, $window, $http, $location) 
           private: $scope.projectRef.private,
           alert_config: $scope.projectRef.alert_config || {},
           repotracker_error: $scope.projectRef.repotracker_error || {},
+          admins : $scope.projectRef.admins || [],
         };
 
         $scope.displayName = $scope.projectRef.display_name ? $scope.projectRef.display_name : $scope.projectRef.identifier;
@@ -171,6 +207,9 @@ mciModule.controller('ProjectCtrl', function($scope, $window, $http, $location) 
     $scope.settingsFormData.batch_time = parseInt($scope.settingsFormData.batch_time)
     if ($scope.proj_var) {
       $scope.addProjectVar();
+    }
+    if ($scope.admin_name) {
+      $scope.addAdmin();
     }
     $http.post('/project/' + $scope.settingsFormData.identifier, $scope.settingsFormData).
       success(function(data, status) {

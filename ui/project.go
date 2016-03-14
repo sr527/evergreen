@@ -115,6 +115,7 @@ func (uis *UIServer) modifyProject(w http.ResponseWriter, r *http.Request) {
 		Private            bool              `json:"private"`
 		Owner              string            `json:"owner_name"`
 		Repo               string            `json:"repo_name"`
+		Admins             []string          `json:"admins"`
 		AlertConfig        map[string][]struct {
 			Provider string                 `json:"provider"`
 			Settings map[string]interface{} `json:"settings"`
@@ -137,6 +138,7 @@ func (uis *UIServer) modifyProject(w http.ResponseWriter, r *http.Request) {
 	projectRef.Owner = responseRef.Owner
 	projectRef.DeactivatePrevious = responseRef.DeactivatePrevious
 	projectRef.Repo = responseRef.Repo
+	projectRef.Admins = responseRef.Admins
 	projectRef.Identifier = id
 
 	projectRef.Alerts = map[string][]model.AlertConfig{}
