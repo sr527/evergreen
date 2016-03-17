@@ -17,11 +17,35 @@ type projectSettings struct {
 	ProjectVars *model.ProjectVars `json:"project_vars"`
 }
 
-func (uis *UIServer) projectsPage(w http.ResponseWriter, r *http.Request) {
-	_ = MustHaveUser(r)
-	projCtx := MustHaveProjectContext(r)
-	allProjects, err := model.FindAllProjectRefs()
+// publicProjectFields are the fields needed by the UI
+// on base_angular and the menu
+type UIProjectFields struct {
+	Identifier  string `json:"identifier"`
+	DisplayName string `json:"display_name"`
+}
 
+// filterAuthorizedProjects iterates through a list of projects and returns a list of all the projects that a user
+// is authorized to view and edit the settings of.
+func (uis *UIServer) filterAuthorizedProjects(u *user.DBUser) ([]model.ProjectRef, error) {
+	allProjects, err := model.FindAllProjectRefs()
+	if err != nil {
+		return nil, err
+	}
+	authorizedProjects := []model.ProjectRef{}
+	// only returns projects for which the user is authorized to see.
+	for _, project := range allProjects {
+		if uis.isSuperUser(u) || isAdmin(u, &project) {
+			authorizedProjects = append(authorizedProjects, project)
+		}
+	}
+	return authorizedProjects, nil
+
+}
+func (uis *UIServer) projectsPage(w http.ResponseWriter, r *http.Request) {
+	dbUser := MustHaveUser(r)
+	projCtx := MustHaveProjectContext(r)
+
+	allProjects, err := uis.filterAuthorizedProjects(dbUser)
 	if err != nil {
 		uis.LoggedError(w, r, http.StatusInternalServerError, err)
 		return
@@ -53,6 +77,7 @@ func (uis *UIServer) projectPage(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id := vars["project_id"]
+
 	projRef, err := model.FindOneProjectRef(id)
 
 	if err != nil {
@@ -86,7 +111,8 @@ func (uis *UIServer) ProjectNotFound(projCtx projectContext, w http.ResponseWrit
 
 func (uis *UIServer) modifyProject(w http.ResponseWriter, r *http.Request) {
 
-	_ = MustHaveUser(r)
+	dbUser := MustHaveUser(r)
+	_ = MustHaveProjectContext(r)
 
 	vars := mux.Vars(r)
 	id := vars["project_id"]
@@ -168,8 +194,7 @@ func (uis *UIServer) modifyProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allProjects, err := model.FindAllProjectRefs()
-
+	allProjects, err := uis.filterAuthorizedProjects(dbUser)
 	if err != nil {
 		uis.LoggedError(w, r, http.StatusInternalServerError, err)
 		return
@@ -183,7 +208,8 @@ func (uis *UIServer) modifyProject(w http.ResponseWriter, r *http.Request) {
 
 func (uis *UIServer) addProject(w http.ResponseWriter, r *http.Request) {
 
-	_ = MustHaveUser(r)
+	dbUser := MustHaveUser(r)
+	_ = MustHaveProjectContext(r)
 
 	vars := mux.Vars(r)
 	id := vars["project_id"]
@@ -211,7 +237,7 @@ func (uis *UIServer) addProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allProjects, err := model.FindAllProjectRefs()
+	allProjects, err := uis.filterAuthorizedProjects(dbUser)
 
 	if err != nil {
 		uis.LoggedError(w, r, http.StatusInternalServerError, err)

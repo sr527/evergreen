@@ -1,8 +1,8 @@
 mciModule.controller('ProjectCtrl', function($scope, $window, $http, $location) {
 
   $scope.availableTriggers = $window.availableTriggers
-  $scope.isSuperUser = $window.isSuperUser;
-  $scope.userId = $window.user.Id
+  $scope.userId = $window.user.Id;
+  $scope.isAdmin = $window.isSuperUser || $window.isAdmin;
 
 
   $scope.projectVars = {};
@@ -22,35 +22,16 @@ mciModule.controller('ProjectCtrl', function($scope, $window, $http, $location) 
   $scope.isDirty = false;
 
 
-  $scope.isAdmin = function(projects) {
-   return _.reduce(projects, function(admin, project){
-    if (project&& project.admins){
-      return admin ||  _.contains(project.admins, $scope.userId)
-    }
-    return admin
-  }, false)  
-}
-
   // refreshTrackedProjects will populate the list of projects that should be displayed 
   // depending on the user. 
   $scope.refreshTrackedProjects = function(trackedProjects) {
     $scope.trackedProjects = trackedProjects
-    $scope.enabledProjects = _.filter($scope.trackedProjects, function(p){
-      if ($scope.isSuperUser || $scope.isAdmin([p])){
-        return p.enabled;
-      }
-    });
-    $scope.disabledProjects = _.filter($scope.trackedProjects, function(p) {
-      if ($scope.isSuperUser || $scope.isAdmin([p])){
-        return !(p.enabled);
-      }
-    });
+    $scope.enabledProjects = _.filter($scope.trackedProjects, _.property('enabled'));
+    $scope.disabledProjects = _.filter($scope.trackedProjects, _.negate(_.property('enabled')));
   };
 
+
   $scope.refreshTrackedProjects($window.allTrackedProjects);
-  $scope.canViewPage = $scope.isSuperUser || $scope.isAdmin($scope.trackedProjects);
-
-
 
   $scope.showProject = function(project) {
     return !(project.length == 0);
@@ -144,7 +125,6 @@ mciModule.controller('ProjectCtrl', function($scope, $window, $http, $location) 
   $scope.loadProject = function(projectId) {
     $http.get('/project/' + projectId)
       .success(function(data, status){
-
         $scope.projectView = true;
         $scope.projectRef = data.ProjectRef;
 
