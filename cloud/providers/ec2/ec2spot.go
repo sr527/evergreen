@@ -37,6 +37,7 @@ type EC2SpotSettings struct {
 	KeyName       string       `mapstructure:"key_name" json:"key_name,omitempty" bson:"key_name,omitempty"`
 	MountPoints   []MountPoint `mapstructure:"mount_points" json:"mount_points,omitempty" bson:"mount_points,omitempty"`
 	BidPrice      float64      `mapstructure:"bid_price" json:"bid_price,omitempty" bson:"bid_price,omitempty"`
+	VPCId         string       `mapstructure:"vpc_id" json:"vpc_id,omitempty" bson:"vpc_id,omitempty"`
 }
 
 func (self *EC2SpotSettings) Validate() error {
