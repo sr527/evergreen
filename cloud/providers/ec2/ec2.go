@@ -37,6 +37,7 @@ type EC2ProviderSettings struct {
 	SecurityGroup string       `mapstructure:"security_group" json:"security_group,omitempty" bson:"security_group,omitempty"`
 	KeyName       string       `mapstructure:"key_name" json:"key_name,omitempty" bson:"key_name,omitempty"`
 	MountPoints   []MountPoint `mapstructure:"mount_points" json:"mount_points,omitempty" bson:"mount_points,omitempty"`
+	SubnetId      string       `mapstructure:"subnet_id" json:"subnet_id,omitempty" bson:"subnet_id,omitempty"`
 }
 
 func (self *EC2ProviderSettings) Validate() error {
@@ -167,6 +168,7 @@ func (cloudManager *EC2Manager) SpawnInstance(d *distro.Distro, owner string, us
 		InstanceType:   ec2Settings.InstanceType,
 		SecurityGroups: ec2.SecurityGroupNames(ec2Settings.SecurityGroup),
 		BlockDevices:   blockDevices,
+		SubnetId:       ec2Settings.SubnetId,
 	}
 
 	// start the instance - starting an instance does not mean you can connect
