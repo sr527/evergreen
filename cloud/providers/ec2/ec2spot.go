@@ -259,6 +259,7 @@ func (cloudManager *EC2SpotManager) SpawnInstance(d *distro.Distro, owner string
 		InstanceType:   ec2Settings.InstanceType,
 		SecurityGroups: ec2.SecurityGroupNames(ec2Settings.SecurityGroup),
 		BlockDevices:   blockDevices,
+		SubnetId:       ec2Settings.SubnetId,
 	}
 
 	spotResp, err := ec2Handle.RequestSpotInstances(spotRequest)
