@@ -1,8 +1,15 @@
 {{define "scripts"}}
 <script type="text/javascript" src="{{Static "js" "waterfall.js"}}?hash={{ StaticsMD5 }}"></script>
 <script type="text/javascript">
-  window.serverData = {{ .Data }}; 
+  window.serverData = {{ .Data }};
+  
 </script>
+
+<!-- ReactJS libs -->
+<script src="https://fb.me/react-15.2.0.js"></script>        
+<script src="https://fb.me/react-dom-15.2.0.js"></script>   
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+
 {{end}}
 
 {{define "title"}}
@@ -10,104 +17,261 @@ Evergreen - Waterfall
 {{end}}
 
 {{define "content"}}
-<div id="content" class="container-fluid" ng-controller="WaterfallCtrl">
-  {{if .Data.Versions}}
-  <header class="clearfix">
-    <h1>Waterfall</h1>
-    <!-- the filter inputs -->
-    <form class="form-inline header-form force-inline" role="form">
-      <div class="form-group">
-        <input id="variant-filter" class="form-control input-sm" type="text" ng-model="filter.variant" placeholder="Filter variant..." />
-      </div>
-      <div class="form-group">
-        <input id="task-filter" class="form-control input-sm" type="text" ng-model="filter.task" placeholder="Filter task..." />
-      </div>
-    </form>
+<script type="text/babel">
 
-    <!-- pagination buttons -->
-    <div class="btn-group btn-group-sm header-pagination">
-      <a ng-if="!disablePreviousLink" class="btn btn-default" ng-href="[[previousPage()]]">Newer</a>
-      <a ng-if="disablePreviousLink" class="btn btn-default" disabled="disabled">Newer</a>
+function getClassName(x){
+  if(x.status=="success" || x.status=="inactive" || x.status =="undispatched" || x.status=="failed"){
+    return x.status;
+  }
+  return ""
+}
 
-      <a ng-if="!disableNextLink" class="btn btn-default" ng-href="[[nextPage()]]">Older</a>
-      <a ng-if="disableNextLink" class="btn btn-default" disabled="disabled">Older</a>
-    </div>
-
-  </header>
-
-<!-- the row of titles -->
-  <div class="row version-header">
-      <!-- build variants title -->
-    <div id="build-variant-col" class="col-xs-2">
-      <div class="row version-header-full text-right">Variant</div>
-    </div>
-   <div class="col-xs-2" ng-repeat="version in versions" ng-model="showFullMessage">
-      <!-- header -->
-      <version-header>
-        <div class="row version-header-full" ng-show="version.rolled_up">
-        <popover-section>
-          [[version.rolled_header]]
-        </popover-section>
+var BuildResult = React.createClass({
+  render: function(){
+    var self = this;
+    var taskStyle = {
+      clear: 'both',
+    //  width: '34px'
+    };
+    return (    
+        <div className="col-xs-2 build-result">
+        {self.props.tasks.map(function(x){ 
+            return <div className={"waterfall-box " + "build-result"}> <a href="" key={x.id} className={"task-result " + getClassName(x)} 
+                style={taskStyle}> </a> </div>
+        })}
         </div>
-        <div ng-show="!version.rolled_up" class="version-header-expanded">
-          <div>
-            <span class="btn btn-default btn-hash history-item-revision">
-              <a href=[[version.id_link]]> [[version.commit]]</a>
-            </span>
-            [[version.create_time]]
-          </div>
-          <i ng-show="version.errors[0].messages.length" class="fa fa-ban error-text" data-element-tooltip="body">&nbsp;</i>
-          <i ng-show="version.warnings[0].messages.length" class="fa fa-warning warning-text" data-element-tooltip="body">&nbsp;</i>
-          <strong>[[version.author]] - </strong>
-              [[version.message]]<!--
-          --><span ng-show="version.messages[0].length > 35"><!--
-          --><span ng-show="!showFullMessage">... <button ng-click="flipExpand()" class="btn-link version-header-button-link">more</button></span><!--
-          --><span ng-show="showFullMessage">[[version.messages[0].substring(35)]]
-              <button ng-click="flipExpand()" class="btn-link version-header-button-link">less</button>
-            </span>
-          </span>
-        </div>
-      </version-header>
-    </div>
-  </div>
+    )
+                                                        
+  }
+})
 
-  <!-- the actual waterfall display -->
-  <div id="wrapper" class="row">
+
+var TestServerData = React.createClass({
+  render: function() {
+    var self = this;
+    return <div>{window.serverData.total_versions}</div>;
+  }
+});
+
+var Version = React.createClass({
+  render: function(){
+    var self = this;
+    var versionStyle = {
+      
+    };
+    return (
+    <div style={versionStyle} className={"col-xs-2"}>
+        {self.props.version.builds.map(function(x){
+          return <BuildResult key={x.id} tasks={x.tasks}/>
+        })}
+      </div>
+    )
+  }
+})
+
+var RolledUp = React.createClass({
+  render: function() {
+    return <div className={"col-xs-2"}>inactive build</div>
+  }
+})
+
+var InactiveTest = React.createClass({
+  render: function(){
+    var self = this;
+    var toReturn;
+
+    if (self.props.version.rolled_up) {
+      //return rolled up version
+      toReturn = <RolledUp></RolledUp>
+    }
+    else {
+      //return full version
+      toReturn = <Version version={self.props.version}/>
+    }
+                                                          
+    return (
+      <div>
+        {toReturn}
+      </div>
+    )
+  }
+})
+/*
+var Grid = React.createClass({
+  render: function(){
+    var self = this;
+    var versions = window.serverData.versions;
+    var versionStyle = {
+      
+    };
+    return (
+      <div>
+        {
+          versions.map(function(x){
+            return <InactiveTest style={versionStyle} version={x} key={x.ids[0]} ids={x.ids[0]}/>
+          })
+        }
+      </div>
+    )
+  }
+  });
+  */
+  /*
+var BuildVariants = React.createClass({
+  render: function(){
+    return (
+      <div>
+        {
+          window.serverData.build_variants.map(function(x){
+            return <div>{x}</div>
+          })
+        }
+      </div>
+    )
+  }
+  });
+*/
+var Task = React.createClass({
+  render: function(){
     
-    <!-- column of build variant names -->
-    <div id="build-variant-col" class="col-xs-2">
-      <div class="row waterfall-cell build-variant-name" ng-repeat="variant in buildVariants | filter:filter.variant" title="[[variant]]">[[variant]]</div>
-    </div>
+    return (
+    <div>task</div> 
+    )
+  }
+});
+var Testing = React.createClass({
+  render: function(){
+    
+    return (
+    <div>testing</div> 
+    )
+  }
+});
 
-    <!-- version columns -->
-    <div class="col-xs-2" ng-repeat="version in versions">
+var BuildVariant = React.createClass({
+  render: function(){
+    var self = this;
+    var toReturn; //have to case on whether its an inactive build or not
+    var tasks;
 
-      <!-- build cells -->
-      <div class="row waterfall-cell" ng-class="{ 'inactive-build': version.rolled_up }"
-        ng-repeat="build in version.builds | filter:{ build_variant: filter.variant }">
-
-        <!-- build result - either a summary of the build, or 'inactive build' striping -->
-        <div ng-switch="version.rolled_up">
-
-          <div ng-switch-when="false">
-            <build-result>
-              <task-result ng-repeat="task in build.tasks | filter:{ display_name: filter.task }">
-              </task-result>
-            </build-result>
-            <build-summary>
-            </build-summary>
-          </div>
-          <div ng-switch-when="true" class="inactive-build">inactive build</div>
-
-        </div>
-
+    if (self.props.currVersion.rolled_up){
+      return (
+      <div className="col-xs-2">inactive build</div>
+      )
+    } 
+    else {
+    tasks = window.serverData.versions[self.props.versionIndex].builds[self.props.archIndex].tasks; //TODO: update indexes
+    console.log(tasks);
+  var taskStyle = {
+          clear: 'both'
+              };
+    /*
+    toReturn = 
+    <div>
+      {tasks.map(function(x) {
+            return <div className={"waterfall-box " + "build-result"}> <a href="" key={x.id} className={"task-result " + getClassName(x)} 
+                style={taskStyle}> </a> </div>
+      })}
+      
+    </div>;
+    */
+    }
+    /*
+    return ( 
+        <div>
+        {tasks.map(function(x){ 
+            return <div className={"waterfall-box " + "build-result"}> <a href="" key={x.id} className={"task-result " + getClassName(x)} 
+                style={taskStyle}> </a> </div>
+        })}
       </div>
+      
+      )
+      */
+      
+      return (
+      <div className="col-xs-2">
+        {
+          tasks.map(function(x){
+            return <div className="waterfall-box" ><a href={"/task/"+x.id} className={"task-result " + getClassName(x)}></a> </div>
+          })
+        }
+      </div>
+      )
+      
 
+      /*
+        return (    
+           <div className="col-xs-2">
+               {tasks.map(function(x){ 
+                    return <div className="waterfall-box"> <a href="" key={x.id} className={"task-result " + getClassName(x)} 
+                      style={taskStyle}> </a> </div>
+                   })}
+                       </div>
+                       )
+                       */
+  }
+});
+
+var Architecture = React.createClass({
+  render: function(){
+    var self = this;
+    var currArch = self.props.arch;
+    var buildColStyle = {
+      'textAlign': 'right'
+    };
+    return (
+    <div className="row">
+      <div className={"col-xs-2" + " build-variant-name"} style={buildColStyle}> {/*the column of build variant (architecture) names*/}
+        {currArch} {/*add an href here*/}
+      </div>
+      <div> {/* test comment */}
+        {
+          window.serverData.versions.map(function(x,i){
+            return <BuildVariant archIndex={self.props.archIndex} currVersion={x} versionIndex={i}  key={i}/>
+          })
+        }
+      </div>
+      <br></br>
+      <br></br>
+      <br></br>
     </div>
+    )
+  }
+});
 
-  </div>
-  {{else}}
-  <p>There are no builds of this project</p>
-  {{end}}
-</div>
+var Grid = React.createClass({
+  render: function(){
+    var self = this;
+    var architectures = window.serverData.build_variants.sort();
+    var archStyle = {
+    };
+    return (
+      <div>
+        {
+          architectures.sort().map(function(x, i){
+            return <Architecture className={"row"} title={x} archIndex={i} style={archStyle} key={i} arch={x}/>
+          })
+        }
+      </div>
+    )
+  }
+  });
+
+
+ReactDOM.render(
+  <Grid></Grid>, document.getElementById('root')
+  );
+/*
+ReactDOM.render(
+  <BuildVariants></BuildVariants>, document.getElementById('builds')
+);
+*/
+</script>
+<!--
+<div id="builds"></div>
+-->
+<div id="root"></div>
+
+
+
 {{end}}

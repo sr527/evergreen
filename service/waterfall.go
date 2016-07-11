@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -310,6 +311,10 @@ func fetchVersionsAndAssociatedBuilds(project *model.Project, skip int, numVersi
 	for _, build := range buildsFromDb {
 		buildsByVersion[build.Version] = append(
 			buildsByVersion[build.Version], build)
+	}
+
+	for _, buildArr := range buildsByVersion {
+
 	}
 
 	return versionsFromDB, buildsByVersion, nil

@@ -1,16 +1,22 @@
 @border-color: rgba(100, 100, 100, .4);
 
-@cell-height: 34px;
-@cell-height-padding: 4px;
+@cell-height: 18px;
+@cell-height-padding: 2px;
 @cell-height-minus-padding: @cell-height - @cell-height-padding * 2;
+@hellotest: 30px;
 
 .waterfall-cell {
-    height: @cell-height;
+    height: 50%;
+    width: 100%;
     padding: 4px;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
     // border-bottom: 1px solid @gray7;
+}
+
+#build-variant-col {
+    height: 100%;
 }
 
 .version-header {
@@ -68,26 +74,35 @@
     margin-bottom: 0;
   }
 }
+.boxes {
+  width: 100%;
+  height: 100%;
+  display: inline-block;
+}
 
 .build-result {
    width: 100%;
+   height: 100%;
    display: table;
    table-layout: fixed;
 }
 
 .build-summary {
     width: 100%;
+    bottom: 100%;
     display: table;
     table-layout: fixed;
     color: black;
-    background-color: #eee;
+//    background-color: white;
     
     &:hover {
         cursor: pointer;
         border: 1px solid #555;
     }
 }
-
+.success-rolled {
+    background-color: @success-text;
+}
 .build-summary-popover-title {
     font-size: 12px;
     overflow: hidden;
@@ -104,21 +119,26 @@
       border-left: 1px dotted grey;
     }
 }
+.waterfall-box {
+  //display: inline-block;
+  float: left;
+}
 .task-result{
   display: table-cell;
   height: @cell-height-minus-padding;
+  width: @cell-height-minus-padding;
+ //   clear: both;
+  //  display: block;
+
   border-left: 1px solid rgba(255,255,255,0.75);
-  
+  border-bottom: 2px solid rgba(255,255,255,1);
   &:hover {
     opacity: .8;
-  }
-  &:first-child {
-    border-left: 1px solid @pw;
   }
 }
 
 .build-summary {
-  height: @cell-height-minus-padding - 2;
+  height: @cell-height-minus-padding + 9;
   font-size: 12px;
   line-height: @cell-height-minus-padding - 2;
   text-align: center;
@@ -134,9 +154,10 @@
   padding-top: 4px;
 }
 
-@media(max-width: 992px) {
+@media(max-width: 991px) {
   #build-variant-col {
     font-size: 12px;
+    height: 100%;
     text-align: right;
   }
   .inactive-build {
@@ -147,22 +168,16 @@
     margin-bottom: 15px;
   }
   .task-result {
-    display: none !important;
+   // display: none !important;
   }
 }
 
 @media(min-width: 992px) {
-  .build-summary {
-    display: none !important;
-  }
-  .tasks-summary {
-    display: none !important;
-  }
   #build-variant-col {
     text-align: right;
-
     .waterfall-cell.build-variant-name {
       padding: 8px 10px 0 10px;
+      height: 50%;
     }
   }
 }
