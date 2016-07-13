@@ -57,6 +57,7 @@ type waterfallTask struct {
 type waterfallBuild struct {
 	Id           string          `json:"id"`
 	BuildVariant string          `json:"build_variant"`
+	VariantId    string          `json:"variant_id"` //for the build_variant page
 	Tasks        []waterfallTask `json:"tasks"`
 }
 
@@ -214,6 +215,7 @@ func getVersionsAndVariants(skip int, numVersionElements int, project *model.Pro
 				buildForWaterfall := waterfallBuild{
 					Id:           build.Id,
 					BuildVariant: buildVariantMappings[build.BuildVariant],
+					VariantId:    build.BuildVariant,
 				}
 
 				if buildForWaterfall.BuildVariant == "" {

@@ -2,28 +2,21 @@
 <script type="text/javascript" src="{{Static "js" "waterfall.js"}}?hash={{ StaticsMD5 }}"></script>
 <script type="text/javascript">
   window.serverData = {{ .Data }};
-//  window.serverData.build_variants = window.serverData.build_variants.sort();
 
-  function comp(a, b) {
+// For sorting the builds in each version
+function comp(a, b) {
     if (a.build_variant > b.build_variant) return 1;
     if (b.build_variant > a.build_variant) return -1;
     return 0;
   }
 
 for (var i = 0; i < window.serverData.versions.length; i++) {
-  //console.log("in serverdata for loop iteration " + i);
   var currVersion = window.serverData.versions[i];
   if (!currVersion.rolled_up)
   {
- //   console.log(window.serverData.versions[i].builds);
     var temp = currVersion.builds;
     window.serverData.versions[i].builds = temp.sort(comp);
-//    console.log(window.serverData.versions[i].builds);
   }
-/*
-    var temp = window.serverData.versions[i].builds;
-    window.serverData.versions[i].builds = temp.sort(comp);
- */
 }
 </script>
 
@@ -40,140 +33,15 @@ Evergreen - Waterfall
 
 {{define "content"}}
 <script type="text/babel">
+//  var ReactTooltip = require("react-tooltip");
+
 
 function getClassName(x){
-  if(x.status=="success" || x.status=="inactive" || x.status =="undispatched" || x.status=="failed"){
+  if(x.status=="success" || x.status=="inactive" || x.status =="undispatched" || x.status=="failed" || x.status=="started"){
     return x.status;
   }
   return ""
 }
-
-var BuildResult = React.createClass({
-  render: function(){
-    var self = this;
-    var taskStyle = {
-      clear: 'both',
-    //  width: '34px'
-    };
-    return (    
-        <div className="col-xs-2 build-result">
-        {self.props.tasks.map(function(x){ 
-            return <div className={"waterfall-box " + "build-result"}> <a href="" key={x.id} className={"task-result " + getClassName(x)} 
-                style={taskStyle}> </a> </div>
-        })}
-        </div>
-    )
-                                                        
-  }
-})
-
-
-var TestServerData = React.createClass({
-  render: function() {
-    var self = this;
-    return <div>{window.serverData.total_versions}</div>;
-  }
-});
-
-var Version = React.createClass({
-  render: function(){
-    var self = this;
-    var versionStyle = {
-      
-    };
-    return (
-    <div style={versionStyle} className={"col-xs-2"}>
-        {self.props.version.builds.map(function(x){
-          return <BuildResult key={x.id} tasks={x.tasks}/>
-        })}
-      </div>
-    )
-  }
-})
-
-var RolledUp = React.createClass({
-  render: function() {
-    var rolledStyle = {
-      textTransform: 'uppercase'
-    };
-    return <div style={rolledStyle} className="inactive-build">inactdive build</div>
-  }
-})
-
-var InactiveTest = React.createClass({
-  render: function(){
-    var self = this;
-    var toReturn;
-    var rolledStyle = {
-      textTransform: 'uppercase',
-      color: '#D3D3D3',
-    };
-
-    if (self.props.version.rolled_up) {
-      //return rolled up version
-      toReturn = <RolledUp style={rolledStyle} className="inactive-build"></RolledUp>
-    }
-    else {
-      //return full version
-      toReturn = <Version version={self.props.version}/>
-    }
-                                                          
-    return (
-        {toReturn}
-    )
-  }
-})
-/*
-var Grid = React.createClass({
-  render: function(){
-    var self = this;
-    var versions = window.serverData.versions;
-    var versionStyle = {
-      
-    };
-    return (
-      <div>
-        {
-          versions.map(function(x){
-            return <InactiveTest style={versionStyle} version={x} key={x.ids[0]} ids={x.ids[0]}/>
-          })
-        }
-      </div>
-    )
-  }
-  });
-  */
-  /*
-var BuildVariants = React.createClass({
-  render: function(){
-    return (
-      <div>
-        {
-          window.serverData.build_variants.map(function(x){
-            return <div>{x}</div>
-          })
-        }
-      </div>
-    )
-  }
-  });
-*/
-var Task = React.createClass({
-  render: function(){
-    
-    return (
-    <div>task</div> 
-    )
-  }
-});
-var Testing = React.createClass({
-  render: function(){
-    
-    return (
-    <div>testing</div> 
-    )
-  }
-});
 
 var BuildVariant = React.createClass({
   render: function(){
@@ -187,33 +55,11 @@ var BuildVariant = React.createClass({
       )
     } 
     else {
-    tasks = window.serverData.versions[self.props.versionIndex].builds[self.props.archIndex].tasks; //TODO: update indexes
-    // console.log(tasks);
+    tasks = window.serverData.versions[self.props.versionIndex].builds[self.props.archIndex].tasks; 
   var taskStyle = {
           clear: 'both'
               };
-    /*
-    toReturn = 
-    <div>
-      {tasks.map(function(x) {
-            return <div className={"waterfall-box " + "build-result"}> <a href="" key={x.id} className={"task-result " + getClassName(x)} 
-                style={taskStyle}> </a> </div>
-      })}
-      
-    </div>;
-    */
     }
-    /*
-    return ( 
-        <div>
-        {tasks.map(function(x){ 
-            return <div className={"waterfall-box " + "build-result"}> <a href="" key={x.id} className={"task-result " + getClassName(x)} 
-                style={taskStyle}> </a> </div>
-        })}
-      </div>
-      
-      )
-      */
       
       return (
       <div className="col-xs-2">
@@ -224,18 +70,6 @@ var BuildVariant = React.createClass({
         }
       </div>
       )
-      
-
-      /*
-        return (    
-           <div className="col-xs-2">
-               {tasks.map(function(x){ 
-                    return <div className="waterfall-box"> <a href="" key={x.id} className={"task-result " + getClassName(x)} 
-                      style={taskStyle}> </a> </div>
-                   })}
-                       </div>
-                       )
-                       */
   }
 });
 
@@ -243,24 +77,31 @@ var Architecture = React.createClass({
   render: function(){
     var self = this;
     var currArch = self.props.arch;
+ //   console.log(currArch);
+    var currName =window.serverData.versions[1].builds[self.props.archIndex].build_variant; 
+ //   console.log(currName);
+//    console.log(window.serverData.versions[1].builds[self.props.archIndex].id);
+
+
+    var test = window.serverData.versions[1].builds[self.props.archIndex].variant_id; 
+ //   console.log("should work " + test);
     var buildColStyle = {
       'textAlign': 'right'
     };
     return (
     <div className="row">
       <div className={"col-xs-2" + " build-variant-name"} style={buildColStyle}> {/*the column of build variant (architecture) names*/}
-        {currArch} {/*add an href here*/}
+         <a href={"/build_variant/" + project + "/" + test}>
+          {currArch} 
+           </a> 
       </div>
-      <div> {/* test comment */}
+      <div> 
         {
           window.serverData.versions.map(function(x,i){
             return <BuildVariant archIndex={self.props.archIndex} currVersion={x} versionIndex={i}  key={i}/>
           })
         }
       </div>
-      <br></br>
-      <br></br>
-      <br></br>
     </div>
     )
   }
@@ -277,6 +118,7 @@ var Grid = React.createClass({
       <div>
         {
           architectures.sort().map(function(x, i){
+            {console.log("hi");}
             return <Architecture className={"row"} title={x} archIndex={i} style={archStyle} key={i} arch={x}/>
           })
         }
@@ -286,19 +128,6 @@ var Grid = React.createClass({
     )
   }
   });
-
-
-ReactDOM.render(
-  <Grid></Grid>, document.getElementById('root')
-  );
-/*
-ReactDOM.render(
-  <BuildVariants></BuildVariants>, document.getElementById('builds')
-);
-*/
-
-
-
 
 var VersionHeader = React.createClass({
   render: function(){
@@ -310,6 +139,7 @@ var VersionHeader = React.createClass({
 
 var Headers = React.createClass({
   render: function(){
+    console.log("hi");
     return (
     <div className="row">
       <div className="col-xs-2">
@@ -326,15 +156,23 @@ var Headers = React.createClass({
   }
 });
 
+
+ReactDOM.render(
+  <Grid></Grid>, document.getElementById('root')
+  );
+
 ReactDOM.render(
   <Headers></Headers>, document.getElementById('headers')
-);
+  );
+
+
 </script>
-<!--
-<div id="builds"></div>
--->
+
+
 <div id="headers"></div>
+
 <br/>
+gfdg
 <div id="root"></div>
 
 
