@@ -2,12 +2,34 @@
 <script type="text/javascript" src="{{Static "js" "waterfall.js"}}?hash={{ StaticsMD5 }}"></script>
 <script type="text/javascript">
   window.serverData = {{ .Data }};
-  
+//  window.serverData.build_variants = window.serverData.build_variants.sort();
+
+  function comp(a, b) {
+    if (a.build_variant > b.build_variant) return 1;
+    if (b.build_variant > a.build_variant) return -1;
+    return 0;
+  }
+
+for (var i = 0; i < window.serverData.versions.length; i++) {
+  //console.log("in serverdata for loop iteration " + i);
+  var currVersion = window.serverData.versions[i];
+  if (!currVersion.rolled_up)
+  {
+ //   console.log(window.serverData.versions[i].builds);
+    var temp = currVersion.builds;
+    window.serverData.versions[i].builds = temp.sort(comp);
+//    console.log(window.serverData.versions[i].builds);
+  }
+/*
+    var temp = window.serverData.versions[i].builds;
+    window.serverData.versions[i].builds = temp.sort(comp);
+ */
+}
 </script>
 
 <!-- ReactJS libs -->
 <script src="https://fb.me/react-15.2.0.js"></script>        
-<script src="https://fb.me/react-dom-15.2.0.js"></script>   
+  <script src="https://fb.me/react-dom-15.2.0.js"></script>   
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
 
 {{end}}
@@ -71,7 +93,10 @@ var Version = React.createClass({
 
 var RolledUp = React.createClass({
   render: function() {
-    return <div className={"col-xs-2"}>inactive build</div>
+    var rolledStyle = {
+      textTransform: 'uppercase'
+    };
+    return <div style={rolledStyle} className="inactive-build">inactdive build</div>
   }
 })
 
@@ -79,10 +104,14 @@ var InactiveTest = React.createClass({
   render: function(){
     var self = this;
     var toReturn;
+    var rolledStyle = {
+      textTransform: 'uppercase',
+      color: '#D3D3D3',
+    };
 
     if (self.props.version.rolled_up) {
       //return rolled up version
-      toReturn = <RolledUp></RolledUp>
+      toReturn = <RolledUp style={rolledStyle} className="inactive-build"></RolledUp>
     }
     else {
       //return full version
@@ -90,9 +119,7 @@ var InactiveTest = React.createClass({
     }
                                                           
     return (
-      <div>
         {toReturn}
-      </div>
     )
   }
 })
@@ -156,12 +183,12 @@ var BuildVariant = React.createClass({
 
     if (self.props.currVersion.rolled_up){
       return (
-      <div className="col-xs-2">inactive build</div>
+      <div className="col-xs-2 inactive-build">inactive build</div>
       )
     } 
     else {
     tasks = window.serverData.versions[self.props.versionIndex].builds[self.props.archIndex].tasks; //TODO: update indexes
-    console.log(tasks);
+    // console.log(tasks);
   var taskStyle = {
           clear: 'both'
               };
@@ -192,7 +219,7 @@ var BuildVariant = React.createClass({
       <div className="col-xs-2">
         {
           tasks.map(function(x){
-            return <div className="waterfall-box" ><a href={"/task/"+x.id} className={"task-result " + getClassName(x)}></a> </div>
+            return <div className="waterfall-box" key={x.id}><a href={"/task/"+x.id} className={"task-result " + getClassName(x)}></a> </div>
           })
         }
       </div>
@@ -246,6 +273,7 @@ var Grid = React.createClass({
     var archStyle = {
     };
     return (
+    <div>
       <div>
         {
           architectures.sort().map(function(x, i){
@@ -253,6 +281,8 @@ var Grid = React.createClass({
           })
         }
       </div>
+      <br/>
+    </div>
     )
   }
   });
@@ -266,10 +296,45 @@ ReactDOM.render(
   <BuildVariants></BuildVariants>, document.getElementById('builds')
 );
 */
+
+
+
+
+var VersionHeader = React.createClass({
+  render: function(){
+    return (
+    <div className="col-xs-2">header</div>
+    )
+  }
+});
+
+var Headers = React.createClass({
+  render: function(){
+    return (
+    <div className="row">
+      <div className="col-xs-2">
+        Variant
+      </div>
+      {
+        window.serverData.versions.map(function(x){
+        return <VersionHeader key={x.ids[0]}/>
+        })
+      }
+      <br/>
+    </div>
+    )
+  }
+});
+
+ReactDOM.render(
+  <Headers></Headers>, document.getElementById('headers')
+);
 </script>
 <!--
 <div id="builds"></div>
 -->
+<div id="headers"></div>
+<br/>
 <div id="root"></div>
 
 
