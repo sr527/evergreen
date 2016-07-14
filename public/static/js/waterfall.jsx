@@ -11,7 +11,7 @@ function getClassName(x){
 }
 
 //Each BuildVariant class is one group of tasks for an arbitrary commit + distro intersection.
-var BuildVariant = React.createClass({displayName: "BuildVariant",
+var BuildVariant = React.createClass({
   render: function(){
     var self = this;
     var toReturn; 
@@ -20,7 +20,7 @@ var BuildVariant = React.createClass({displayName: "BuildVariant",
     //Casing on whether or not the version is rolled up
     if (self.props.currVersion.rolled_up){
       return (
-        React.createElement("div", {className: "col-xs-2 inactive-build"}, " inactive build ")
+        <div className="col-xs-2 inactive-build"> inactive build </div>
       )
     } 
     else {
@@ -31,20 +31,20 @@ var BuildVariant = React.createClass({displayName: "BuildVariant",
     }
       
     return (
-      React.createElement("div", {className: "col-xs-2"}, 
-        
+      <div className="col-xs-2">
+        {
           tasks.map(function(x){
-            return React.createElement("div", {className: "waterfall-box", key: x.id}, React.createElement("a", {href: "/task/"+x.id, className: "task-result " + getClassName(x)}), " ")
+            return <div className="waterfall-box" key={x.id}><a href={"/task/"+x.id} className={"task-result " + getClassName(x)}></a> </div>
           })
-        
-      )
+        }
+      </div>
       )
   }
 });
 
 // The class for each "row" of the waterfall page. Includes the build variant link, as well as the five columns
 // of versions.
-var Architecture = React.createClass({displayName: "Architecture",
+var Architecture = React.createClass({
   render: function(){
     var self = this;
     var currArch = self.props.arch;
@@ -74,68 +74,68 @@ var Architecture = React.createClass({displayName: "Architecture",
     }
 
     return (
-    React.createElement("div", {className: "row", style: rowStyle}, 
-      React.createElement("div", {className: "col-xs-2" + " build-variant-name", style: buildColStyle}, " ", /*the column of build variant (architecture) names*/
-         React.createElement("a", {href: "/build_variant/" + project + "/" + variantID}, 
-          currArch
-           )
-      ), 
-      React.createElement("div", null, 
-        
+    <div className="row" style={rowStyle}>
+      <div className={"col-xs-2" + " build-variant-name"} style={buildColStyle}> {/*the column of build variant (architecture) names*/}
+         <a href={"/build_variant/" + project + "/" + variantID}>
+          {currArch} 
+           </a> 
+      </div>
+      <div> 
+        {
           window.serverData.versions.map(function(x,i){
-            return React.createElement(BuildVariant, {archIndex: self.props.archIndex, currVersion: x, versionIndex: i, key: i})
+            return <BuildVariant archIndex={self.props.archIndex} currVersion={x} versionIndex={i}  key={i}/>
           })
-        
-      ), 
-      React.createElement("br", null)
-    )
+        }
+      </div>
+      <br></br>
+    </div>
     )
   }
 });
 
 // The main class that binds to the root div. This contains all the distros, builds, and tasks
-var Grid = React.createClass({displayName: "Grid",
+var Grid = React.createClass({
   render: function(){
     var self = this;
     var architectures = window.serverData.build_variants.sort();
     return (
-    React.createElement("div", null, 
-      React.createElement("div", null, 
-        
+    <div>
+      <div>
+        {
           architectures.sort().map(function(x, i){
-            return React.createElement(Architecture, {className: "row", title: x, archIndex: i, key: i, arch: x})
+            return <Architecture className={"row"} title={x} archIndex={i} key={i} arch={x}/>
           })
-        
-      )
-    )
+        }
+      </div>
+    </div>
     )
   }
   });
 
 // Renders the git commit summary for one version
-var VersionHeader = React.createClass({displayName: "VersionHeader",
+var VersionHeader = React.createClass({
   render: function(){
     return (
-    React.createElement("div", {className: "col-xs-2"}, "(header placeholder)")
+    <div className="col-xs-2">(header placeholder)</div>
     )
   }
 });
 
 // The class which renders the "Variant" and git commit summary headers
-var Headers = React.createClass({displayName: "Headers",
+var Headers = React.createClass({
   render: function(){
     return (
-    React.createElement("div", {className: "row"}, 
-      React.createElement("div", {className: "col-xs-2"}, 
-        "Variant"
-      ), 
-      
+    <div className="row">
+      <div className="col-xs-2">
+        Variant
+      </div>
+      {
         window.serverData.versions.map(function(x){
-        return React.createElement(VersionHeader, {key: x.ids[0]})
-        }), 
-      
-      React.createElement("br", null)
-    )
+        return <VersionHeader key={x.ids[0]}/>
+        })
+      }
+      <br/>
+    </div>
     )
   }
 });
