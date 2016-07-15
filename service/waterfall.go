@@ -57,12 +57,10 @@ type waterfallTask struct {
 type waterfallBuild struct {
 	Id           string                `json:"id"`
 	BuildVariant waterfallBuildVariant `json:"build_variant"`
-	// BuildVariant string          `json:"build_variant"`
-	// VariantId string          `json:"variant_id"` //for the build_variant page
-	Tasks []waterfallTask `json:"tasks"`
+	Tasks        []waterfallTask       `json:"tasks"`
 }
 
-// Waterfall-specific representation of a single build variant
+// waterfallBuildVariant stores the Id and DisplayName for a given build
 type waterfallBuildVariant struct {
 	Id          string `json:"id"`
 	DisplayName string `json:"display_name"`
@@ -219,14 +217,18 @@ func getVersionsAndVariants(skip int, numVersionElements int, project *model.Pro
 			// add the builds to the version
 			for _, build := range buildsInVersion {
 
-				buildForWaterfall := waterfallBuild{
-					Id:           build.Id,
-					BuildVariant: buildVariantMappings[build.BuildVariant],
-					VariantId:    build.BuildVariant,
+				bll := waterfallBuildVariant{
+					Id:          build.BuildVariant,
+					DisplayName: buildVariantMappings[build.BuildVariant],
 				}
 
-				if buildForWaterfall.BuildVariant == "" {
-					buildForWaterfall.BuildVariant = build.BuildVariant +
+				buildForWaterfall := waterfallBuild{
+					Id:           build.Id,
+					BuildVariant: bll,
+				}
+
+				if buildForWaterfall.BuildVariant.DisplayName == "" {
+					buildForWaterfall.BuildVariant.DisplayName = build.BuildVariant +
 						" (removed)"
 				}
 

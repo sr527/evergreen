@@ -1,41 +1,14 @@
 {{define "scripts"}}
 <!-- ReactJS libs -->
-<script src="https://fb.me/react-15.2.0.min.js"></script>        
-<script src="https://fb.me/react-dom-15.2.0.min.js"></script>   
+<script src="https://fb.me/react-15.2.0.js"></script>        
+<script src="https://fb.me/react-dom-15.2.0.js"></script>   
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
-
 <script type="text/javascript">
   window.serverData = {{ .Data }};
 
-// Logic for sorting the builds in each version
-// Ideally this would be done in the backend before passing it over to the client
-function comp(a, b) {
-    if (a.build_variant > b.build_variant) return 1;
-    if (b.build_variant > a.build_variant) return -1;
-    return 0;
-  }
-
-for (var i = 0; i < window.serverData.versions.length; i++) {
-  var currVersion = window.serverData.versions[i];
-  if (!currVersion.rolled_up)
-  {
-    var temp = currVersion.builds;
-    window.serverData.versions[i].builds = temp.sort(comp);
-  }
-}
-
-//Logic for finding first unrolled up version
-var i = 0;
-window.unrolledVersionIndex = 0;
-while (i < window.serverData.versions.length) {
-  if (!window.serverData.versions[i].rolled_up) {
-    window.unrolledVersionIndex = i;
-    break; 
-  }
-  i++;
-}
-
 </script>
+
+<script type="text/javascript" src="{{Static "js" "waterfall.js"}}?hash={{ StaticsMD5 }}"></script>
 
 {{end}}
 
@@ -45,9 +18,17 @@ Evergreen - Waterfall
 
 {{define "content"}}
 <div id="headers"></div>
-
-<br/>
 <div id="root"></div>
-<script type="text/javascript" src="{{Static "js" "waterfall.js"}}?hash={{ StaticsMD5 }}"></script>
+
+<!-- This script needs to run after the two divs have been defined, so that the code works correctly. 
+We should look into binding the reactDOM.renders to some kind of onload func -->
+<script type="text/babel">
+  ReactDOM.render(
+  <Headers></Headers>, document.getElementById('headers')
+  );
+ReactDOM.render(
+  <Grid></Grid>, document.getElementById('root')
+  );
+</script> 
 
 {{end}}
