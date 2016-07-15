@@ -1928,8 +1928,11 @@ pre {
   text-overflow: ellipsis;
   overflow: hidden;
 }
-#build-variant-col {
-  height: 100%;
+.variant-row {
+  padding-bottom: 10px;
+}
+.distro-col {
+  text-align: right;
 }
 .version-header {
   height: auto;
@@ -2050,26 +2053,12 @@ pre {
   padding-top: 4px;
 }
 @media (max-width: 991px) {
-  #build-variant-col {
-    font-size: 12px;
-    height: 100%;
-    text-align: right;
-  }
   .inactive-build {
     font-size: 10px;
   }
   .filter {
     width: 100%;
     margin-bottom: 15px;
-  }
-}
-@media (min-width: 992px) {
-  #build-variant-col {
-    text-align: right;
-  }
-  #build-variant-col .waterfall-cell.build-variant-name {
-    padding: 8px 10px 0 10px;
-    height: 50%;
   }
 }
 .active-elt-colors {

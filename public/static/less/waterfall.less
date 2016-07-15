@@ -11,11 +11,13 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-    // border-bottom: 1px solid @gray7;
+}
+.variant-row {
+  padding-bottom: 10px;
 }
 
-#build-variant-col {
-    height: 100%;
+.distro-col {
+ text-align: right;
 }
 
 .version-header {
@@ -92,7 +94,6 @@
     display: table;
     table-layout: fixed;
     color: black;
-//    background-color: white;
     
     &:hover {
         cursor: pointer;
@@ -119,15 +120,12 @@
     }
 }
 .waterfall-box {
-  //display: inline-block;
   float: left;
 }
 .task-result{
   display: table-cell;
   height: @cell-height-minus-padding;
   width: @cell-height-minus-padding;
- //   clear: both;
-  //  display: block;
 
   border-left: 1px solid rgba(255,255,255,0.75);
   border-bottom: 2px solid rgba(255,255,255,1);
@@ -154,11 +152,6 @@
 }
 
 @media(max-width: 991px) {
-  #build-variant-col {
-    font-size: 12px;
-    height: 100%;
-    text-align: right;
-  }
   .inactive-build {
     font-size: 10px;
   }
@@ -166,17 +159,5 @@
     width: 100%;
     margin-bottom: 15px;
   }
-  .task-result {
-   // display: none !important;
-  }
 }
 
-@media(min-width: 992px) {
-  #build-variant-col {
-    text-align: right;
-    .waterfall-cell.build-variant-name {
-      padding: 8px 10px 0 10px;
-      height: 50%;
-    }
-  }
-}

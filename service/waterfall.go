@@ -55,10 +55,17 @@ type waterfallTask struct {
 
 // Waterfall-specific representation of a single build
 type waterfallBuild struct {
-	Id           string          `json:"id"`
-	BuildVariant string          `json:"build_variant"`
-	VariantId    string          `json:"variant_id"` //for the build_variant page
-	Tasks        []waterfallTask `json:"tasks"`
+	Id           string                `json:"id"`
+	BuildVariant waterfallBuildVariant `json:"build_variant"`
+	// BuildVariant string          `json:"build_variant"`
+	// VariantId string          `json:"variant_id"` //for the build_variant page
+	Tasks []waterfallTask `json:"tasks"`
+}
+
+// Waterfall-specific representation of a single build variant
+type waterfallBuildVariant struct {
+	Id          string `json:"id"`
+	DisplayName string `json:"display_name"`
 }
 
 // Waterfall-specific representation of a single version element.  If the
@@ -314,11 +321,6 @@ func fetchVersionsAndAssociatedBuilds(project *model.Project, skip int, numVersi
 			buildsByVersion[build.Version], build)
 	}
 
-	/*
-		for _, buildArr := range buildsByVersion {
-
-		}
-	*/
 	return versionsFromDB, buildsByVersion, nil
 }
 

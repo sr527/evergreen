@@ -1,12 +1,11 @@
 {{define "scripts"}}
 <!-- ReactJS libs -->
 <script src="https://fb.me/react-15.2.0.min.js"></script>        
-  <script src="https://fb.me/react-dom-15.2.0.min.js"></script>   
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+<script src="https://fb.me/react-dom-15.2.0.min.js"></script>   
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
 
 <script type="text/javascript">
   window.serverData = {{ .Data }};
-
 
 // Logic for sorting the builds in each version
 // Ideally this would be done in the backend before passing it over to the client
@@ -24,8 +23,19 @@ for (var i = 0; i < window.serverData.versions.length; i++) {
     window.serverData.versions[i].builds = temp.sort(comp);
   }
 }
-</script>
 
+//Logic for finding first unrolled up version
+var i = 0;
+window.unrolledVersionIndex = 0;
+while (i < window.serverData.versions.length) {
+  if (!window.serverData.versions[i].rolled_up) {
+    window.unrolledVersionIndex = i;
+    break; 
+  }
+  i++;
+}
+
+</script>
 
 {{end}}
 
@@ -39,15 +49,5 @@ Evergreen - Waterfall
 <br/>
 <div id="root"></div>
 <script type="text/javascript" src="{{Static "js" "waterfall.js"}}?hash={{ StaticsMD5 }}"></script>
-<script type="text/javascript">
-ReactDOM.render(
-  React.createElement(Headers, null), document.getElementById('headers')
-  );
-
-ReactDOM.render(
-  React.createElement(Grid, null), document.getElementById('root')
-  );
-</script>
-
 
 {{end}}
