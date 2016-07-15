@@ -217,14 +217,14 @@ func getVersionsAndVariants(skip int, numVersionElements int, project *model.Pro
 			// add the builds to the version
 			for _, build := range buildsInVersion {
 
-				bll := waterfallBuildVariant{
+				buildVariant := waterfallBuildVariant{
 					Id:          build.BuildVariant,
 					DisplayName: buildVariantMappings[build.BuildVariant],
 				}
 
 				buildForWaterfall := waterfallBuild{
 					Id:           build.Id,
-					BuildVariant: bll,
+					BuildVariant: buildVariant,
 				}
 
 				if buildForWaterfall.BuildVariant.DisplayName == "" {
