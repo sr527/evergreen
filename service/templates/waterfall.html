@@ -3,9 +3,9 @@
 <script src="https://fb.me/react-15.2.0.js"></script>        
 <script src="https://fb.me/react-dom-15.2.0.js"></script>   
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+
 <script type="text/javascript">
   window.serverData = {{ .Data }};
-
 </script>
 
 <script type="text/javascript" src="{{Static "js" "waterfall.js"}}?hash={{ StaticsMD5 }}"></script>
@@ -20,15 +20,19 @@ Evergreen - Waterfall
 <div id="headers"></div>
 <div id="root"></div>
 
-<!-- This script needs to run after the two divs have been defined, so that the code works correctly. 
-We should look into binding the reactDOM.renders to some kind of onload func -->
-<script type="text/babel">
-  ReactDOM.render(
-  <Headers></Headers>, document.getElementById('headers')
-  );
-ReactDOM.render(
-  <Grid></Grid>, document.getElementById('root')
-  );
-</script> 
+<script type="text/javascript" src="{{Static "js" "waterfall-render.js"}}?hash={{ StaticsMD5 }}"></script>
 
+<!-- Either we have the above line, or something like the inline script below, which is JS not JSX -->
+<!--
+<script type="text/javascript">
+ReactDOM.render(
+  React.createElement(Headers, null),
+  document.getElementById('headers')
+);
+ReactDOM.render(
+  React.createElement(Grid, null),
+  document.getElementById('root')
+);
+</script>
+-->
 {{end}}
