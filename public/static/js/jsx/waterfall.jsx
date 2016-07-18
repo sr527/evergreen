@@ -14,19 +14,7 @@ function comp(a, b) {
 // Also keeps track of the index of an unrolled version to iterate through
 window.unrolledVersionIndex = 0;
 
-/*
-_.map(window.serverData.versions, function(vers, i) {
-  var currVersion = window.serverData.versions[i];
-  if (!currVersion.rolled_up)
-  {
-    window.unrolledVersionIndex = i;
-    var temp = currVersion.builds;
-    window.serverData.versions[i].builds = temp.sort(comp);
-  }
-});
-*/
 _.each(window.serverData.versions, function(version, i) {
-  var currVersion = version;
   if (!version.rolled_up)
   {
     window.unrolledVersionIndex = i;
@@ -146,6 +134,3 @@ var Headers = React.createClass({
     )
   }
 });
-
-
-

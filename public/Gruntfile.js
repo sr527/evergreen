@@ -8,45 +8,12 @@ module.exports = function(grunt) {
         babel: {
           options: {
             sourceMap: true,
-       //     presets:  ['es2015'],
             plugins: ['transform-react-jsx'],
             presets: ['es2015', 'react']
           }
-        /*  
-          dist: {
-            files: {
-              'static/js/waterfall.js':'static/js/waterfall.jsx'
-            }
-          } 
-        */
-        },
-/*
-        jsx: {
-          waterfall: {
-            src: 'static/js/waterfall.jsx',
-            dest: 'static/js/waterfall.js'
-          }
-        },
-  */
-
-        jsx: {
-          files: [{
-            expand: true,
-            cwd: 'static/js/jsx',
-            src: ['*.jsx'],
-            dest: 'static/js',
-            ext: '.js'
-          }]
         },
 
         react: {
- /*
-          single_file_output: {
-            files: {
-              'static/js/waterfall.js':'static/js/jsx/waterfall.jsx'
-            }
-          },
- */
           dynamic_mappings: {
             files: [{
               expand: true,
@@ -68,19 +35,7 @@ module.exports = function(grunt) {
             tasks: ['react']
           }
         },
-
-        reactjsx: {
-          all: {
-            files: [{
-              expand: true,
-              src: [
-                'static/js/jsx/*.jsx'
-              ],
-              ext: '.js'
-            }]
-          }
-        },
-
+        
         less: {
             main: {
                 options: {
@@ -109,7 +64,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-cssmin');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-react');
-    grunt.loadNpmTasks('grunt-reactjsx');
 
     grunt.registerTask('css', ['less', 'cssmin']);
     grunt.registerTask('default', ['css']);
