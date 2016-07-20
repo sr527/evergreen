@@ -1,8 +1,4 @@
 ReactDOM.render(
-  React.createElement(Headers, null),
-  document.getElementById('headers')
-);
-ReactDOM.render(
-  React.createElement(Grid, null),
+  React.createElement(Root, {data: window.serverData}),
   document.getElementById('root')
 );

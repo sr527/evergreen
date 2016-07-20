@@ -1,8 +1,4 @@
 ReactDOM.render(
-  <Headers></Headers>,
-  document.getElementById('headers')
-);
-ReactDOM.render(
-  <Grid></Grid>,
+  <Root data={window.serverData} ></Root>,
   document.getElementById('root')
 );

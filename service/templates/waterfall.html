@@ -6,6 +6,7 @@
 
 <script type="text/javascript">
   window.serverData = {{ .Data }};
+  window.serverData.unrolledVersionIndex = -1; //to be initialized in preprocessing function
 </script>
 
 <script type="text/javascript" src="{{Static "js" "waterfall.js"}}?hash={{ StaticsMD5 }}"></script>
@@ -17,22 +18,8 @@ Evergreen - Waterfall
 {{end}}
 
 {{define "content"}}
-<div id="headers"></div>
 <div id="root"></div>
 
 <script type="text/javascript" src="{{Static "js" "waterfall-render.js"}}?hash={{ StaticsMD5 }}"></script>
 
-<!-- Either we have the above line, or something like the inline script below, which is JS not JSX -->
-<!--
-<script type="text/javascript">
-ReactDOM.render(
-  React.createElement(Headers, null),
-  document.getElementById('headers')
-);
-ReactDOM.render(
-  React.createElement(Grid, null),
-  document.getElementById('root')
-);
-</script>
--->
 {{end}}
