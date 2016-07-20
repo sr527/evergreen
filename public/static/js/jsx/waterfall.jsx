@@ -32,10 +32,9 @@ function preprocessing(data) {
   data.build_variants = data.build_variants.sort();
 
 }
-
 preprocessing(window.serverData);
 
-
+// A Task contains the information for a single task for a build, including the link to its page, and a tooltip
 class Task extends React.Component {
   render() {
     // Used to display the correct color for each task
@@ -58,6 +57,7 @@ class Task extends React.Component {
   }
 }
 
+// All tasks are inactive, so we display the words "inactive build"
 class InactiveBuild extends React.Component {
   render() {
     return (
@@ -66,6 +66,7 @@ class InactiveBuild extends React.Component {
   }
 }
 
+// At least one task in the version is non-inactive, so we display all build tasks with their appropiate colors signifying their status
 class ActiveBuild extends React.Component {
   render() {
     var tasks = getBuildByIds(this.props.versionIndex, this.props.variantIndex, this.props.data).tasks;
@@ -84,7 +85,8 @@ class ActiveBuild extends React.Component {
   }
 }
 
-// Each Build class is one group of tasks for an version + build variant intersection.
+// Each Build class is one group of tasks for an version + build variant intersection
+// We case on whether or not a build is active or not, and return either an ActiveBuild or InactiveBuild respectively
 class Build extends React.Component{
   render() {
     // Casing on whether or not the version is rolled up
@@ -158,95 +160,12 @@ class Grid extends React.Component{
   }
 }
 
-/*** START VERSION HEADER CODE ***/
-/*
-class RolledUpHeader extends React.Component{
-  render() {
-    return (
-      <div> rolled up header </div>
-    )
-  }
-}
-
-// Renders the git commit summary for one version
-class VersionHeader extends React.Component{
-  render() {
-    var currVersion = this.props.data.versions[this.props.versionIndex];
-    var message = currVersion.messages[0];
-
-    if (currVersion.rolled_up) {
-      var versiontitle = currVersion.messages.length > 1 ? "versions" : "version";
-      var rolled_header = currVersion.messages.length + " inactive " + versiontitle; 
-      message = rolled_header;
-      console.log("rolled up");
-      return (
-        <div className="col-xs-2">
-        {message}
-        </div>
-      )
-    }
-    else {
-      var author = currVersion.authors[0];
-      var id_link = "/version/" + currVersion.ids[0];
-      var commit = currVersion.revisions[0].substring(0,5);
-      var shortened_message = currVersion.messages[0].substring(0,35);
-    
-      var date_time = new Date(currVersion.create_times[0]);
-      var formatted_time = date_time.toLocaleDateString('en-US', {
-        month : 'numeric',
-        day : 'numeric',
-        year : '2-digit',
-        hour : '2-digit',
-        minute : '2-digit'
-      }).replace(",","");
-    }
-    
-    return (
-    <div className="col-xs-2">
-    {    <div className="version-header-expanded">
-        <div>
-          <span className="btn btn-default btn-hash history-item-revision">
-            <a href={id_link}>{commit}</a>
-          </span>
-          {formatted_time}
-        </div>
-         <span style={{fontWeight: "bold"}}> {author} - </span>
-        {shortened_message}
-      </div> }
-    </div>
-    )
-  }
-}
-
-
-// The class which renders the "Variant" and git commit summary headers
-class Headers extends React.Component{
-  render() {
-    return (
-    <div className="row version-header">
-      <div classID="build-variant-col" className="col-xs-2 version-header-full text-right">
-        Variant
-      </div>
-      {
-        this.props.data.versions.map(function(x,i){
-        return <VersionHeader key={x.ids[0]} versionIndex={i}/>
-        })
-      }
-      <br/>
-    </div>
-    )
-  }
-}
-*/
-
-/*** END VERSION HEADER CODE ***/
 
 
 class Root extends React.Component{
   render() {
     return (
       <div>
-      {/*  <Headers data={this.props.data}></Headers> */}
         <Grid data={this.props.data}></Grid>
       </div>
     )
