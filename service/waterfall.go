@@ -35,6 +35,7 @@ func skipValue(r *http.Request) (int, error) {
 	return strconv.Atoi(toSkipStr)
 }
 
+// waterfallData is all of the data that gets sent to the waterfall page on load
 type waterfallData struct {
 	Versions          []waterfallVersion `json:"versions"`
 	BuildVariants     []string           `json:"build_variants"`
@@ -53,7 +54,12 @@ type waterfallTask struct {
 	Activated     bool                    `json:"activated"`
 }
 
-// Waterfall-specific representation of a single build
+// Waterfall-specific representation of a single build. In the waterfall page, this data is used to render the
+// intersection of one build variant and one version. waterfallBuild is null if the version is rolled up.
+// Tasks holds an array of tasks that this build runs and the relevant data associated with each one
+// Id is the unique id for each build
+// BuildVariant stores the relevant data for the build variant of each build,
+// including the unique id and human-friendly display name
 type waterfallBuild struct {
 	Id           string                `json:"id"`
 	BuildVariant waterfallBuildVariant `json:"build_variant"`
@@ -61,6 +67,7 @@ type waterfallBuild struct {
 }
 
 // waterfallBuildVariant stores the Id and DisplayName for a given build
+// This struct is associated with one waterfallBuild
 type waterfallBuildVariant struct {
 	Id          string `json:"id"`
 	DisplayName string `json:"display_name"`

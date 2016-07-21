@@ -7,9 +7,9 @@ function getBuildByIds(versionId, buildId, data) {
   return data.versions[versionId].builds[buildId];
 }
 
-// This function preprocesses the data given by the server 
-// It sorts the array of builds for each version, as well as the array of build variants
-function preprocessing(data) {
+// Preprocess the data given by the server 
+// Sort the array of builds for each version, as well as the array of build variants
+function preProcessData(data) {
   // Comparison function used to sort the builds for each version
   function comp(a, b) {
       if (a.build_variant.display_name > b.build_variant.display_name) return 1;
@@ -17,22 +17,21 @@ function preprocessing(data) {
       return 0;
     }
 
-  // Iterates over each version and if it is not rolled up, sorts its list of builds
-  // Keeps track of an index for an unrolled up version as well
+  // Iterate over each version and sort the list of builds for unrolled up versions 
+  // Keep track of an index for an unrolled up version as well
 
   _.each(data.versions, function(version, i) {
-    if (!version.rolled_up)
-    {
+    if (!version.rolled_up) {
       data.unrolledVersionIndex = i;
       data.versions[i].builds = version.builds.sort(comp);
     }
   });
 
-  //Sorts the build variants that Grid uses to show the column on the left-hand side
+  //Sort the build variants that Grid uses to show the build column on the left-hand side
   data.build_variants = data.build_variants.sort();
-
 }
-preprocessing(window.serverData);
+
+preProcessData(window.serverData);
 
 // A Task contains the information for a single task for a build, including the link to its page, and a tooltip
 class Task extends React.Component {
@@ -49,9 +48,10 @@ class Task extends React.Component {
 
     var href = "/task/" + this.props.task.id;
     var status = getStatus(this.props.task);
+
     return (
       <div data-tooltip="tooltip placeholder" className="waterfall-box"> 
-        <a href={href} className={"task-result " + status}></a>  
+        <a href={href} className={"task-result " + status} />  
       </div>
     )
   }
@@ -60,9 +60,7 @@ class Task extends React.Component {
 // All tasks are inactive, so we display the words "inactive build"
 class InactiveBuild extends React.Component {
   render() {
-    return (
-        <div className="col-xs-2 inactive-build"> inactive build </div>
-    )
+    return <div className="col-xs-2 inactive-build"> inactive build </div>;
   }
 }
 
@@ -74,11 +72,15 @@ class ActiveBuild extends React.Component {
     return (
       <div className="col-xs-2">
         {
+          /*
           tasks.map(function(x){
             return (
-              <Task key={x.id} task={x}> </Task>
+              <Task key={x.id} task={x} />
             )
           })
+         */
+
+               tasks.map((x) => {return <Task key={x.id} task={x} />})
         }
       </div>
       )
@@ -89,24 +91,16 @@ class ActiveBuild extends React.Component {
 // We case on whether or not a build is active or not, and return either an ActiveBuild or InactiveBuild respectively
 class Build extends React.Component{
   render() {
-    // Casing on whether or not the version is rolled up
-    var data = this.props.data;
-    var versionIndex = this.props.versionIndex;
-    var variantIndex = this.props.variantIndex;
+    var currentVersion = this.props.data.versions[this.props.versionIndex];
+    
+    if (currentVersion.rolled_up) {
+      return <InactiveBuild />;
+    }
 
-    var currentVersion = data.versions[versionIndex];
-  
-    if (currentVersion.rolled_up){
-      return (
-        <InactiveBuild></InactiveBuild>
-      )
-    }
-    else {
-      return (
-        <ActiveBuild data={data} versionIndex={versionIndex} variantIndex={variantIndex}></ActiveBuild>
-      )
-      
-    }
+    //We have an active build with tasks
+    return (
+      <ActiveBuild data={this.props.data} versionIndex={this.props.versionIndex} variantIndex={this.props.variantIndex} />
+    )
   }
 }
 
@@ -120,25 +114,25 @@ class Variant extends React.Component{
 
     var variantId = getBuildByIds(data.unrolledVersionIndex, variantIndex, data).build_variant.id;
     return (
-    <div className="row variant-row">
+      <div className="row variant-row">
 
-      {/* column of build names */}
-      <div className={"col-xs-2" + " build-variant-name" + " distro-col"} > 
-         <a href={"/build_variant/" + project + "/" + variantId}>
-          {variantDisplayName} 
-           </a> 
+        {/* column of build names */}
+        <div className={"col-xs-2" + " build-variant-name" + " distro-col"} > 
+          <a href={"/build_variant/" + project + "/" + variantId}>
+            {variantDisplayName} 
+          </a> 
+        </div>
+
+        {/* 5 columns of versions */}
+        <div> 
+          {
+            data.versions.map(function(x,i){
+              return <Build key={x.ids[0]} data={data} variantIndex={variantIndex} versionIndex={i} />;
+            })
+          }
+        </div>
+
       </div>
-
-      {/* 5 columns of versions */}
-      <div> 
-        {
-          data.versions.map(function(x,i){
-            return <Build key={x.ids[0]} data={data} variantIndex={variantIndex} versionIndex={i} />
-          })
-        }
-      </div>
-
-    </div>
     )
   }
 }
@@ -147,26 +141,26 @@ class Variant extends React.Component{
 class Grid extends React.Component{
   render() {
     var data = this.props.data;
-
+    var xuz = data;
     return (
-    <div classID="wrapper">
-      {
-        data.build_variants.map(function(x, i){
-          return <Variant key={x} data={data} variantIndex={i} variantDisplayName={x} />
-        })
-      }
-    </div>
+      <div classID="wrapper">
+        {
+          this.props.data.build_variants.map(function(x, i){
+            return <Variant key={x} data={data} variantIndex={i} variantDisplayName={x} />;
+          })
+        }
+      </div>
     )
   }
 }
 
-
-
+// The Root class renders all components on the waterfall page, including the grid view and the filter and new page buttons
+// The one exception is the header, which is written in Angular and managed by menu.html
 class Root extends React.Component{
   render() {
     return (
       <div>
-        <Grid data={this.props.data}></Grid>
+        <Grid data={this.props.data} />
       </div>
     )
   }
