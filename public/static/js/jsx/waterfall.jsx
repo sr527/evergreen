@@ -72,15 +72,9 @@ class ActiveBuild extends React.Component {
     return (
       <div className="col-xs-2">
         {
-          /*
-          tasks.map(function(x){
-            return (
-              <Task key={x.id} task={x} />
-            )
+          tasks.map((x) => {
+            return <Task key={x.id} task={x} />
           })
-         */
-
-               tasks.map((x) => {return <Task key={x.id} task={x} />})
         }
       </div>
       )
@@ -126,7 +120,7 @@ class Variant extends React.Component{
         {/* 5 columns of versions */}
         <div> 
           {
-            data.versions.map(function(x,i){
+            data.versions.map((x,i) => {
               return <Build key={x.ids[0]} data={data} variantIndex={variantIndex} versionIndex={i} />;
             })
           }
@@ -145,7 +139,7 @@ class Grid extends React.Component{
     return (
       <div classID="wrapper">
         {
-          this.props.data.build_variants.map(function(x, i){
+          this.props.data.build_variants.map((x, i) => {
             return <Variant key={x} data={data} variantIndex={i} variantDisplayName={x} />;
           })
         }

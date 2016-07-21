@@ -72,15 +72,9 @@ class ActiveBuild extends React.Component {
     return (
       React.createElement("div", {className: "col-xs-2"}, 
         
-          /*
-          tasks.map(function(x){
-            return (
-              <Task key={x.id} task={x} />
-            )
+          tasks.map((x) => {
+            return React.createElement(Task, {key: x.id, task: x})
           })
-         */
-
-               tasks.map((x) => {return React.createElement(Task, {key: x.id, task: x})})
         
       )
       )
@@ -126,7 +120,7 @@ class Variant extends React.Component{
         /* 5 columns of versions */
         React.createElement("div", null, 
           
-            data.versions.map(function(x,i){
+            data.versions.map((x,i) => {
               return React.createElement(Build, {key: x.ids[0], data: data, variantIndex: variantIndex, versionIndex: i});
             })
           
@@ -145,7 +139,7 @@ class Grid extends React.Component{
     return (
       React.createElement("div", {classID: "wrapper"}, 
         
-          this.props.data.build_variants.map(function(x, i){
+          this.props.data.build_variants.map((x, i) => {
             return React.createElement(Variant, {key: x, data: data, variantIndex: i, variantDisplayName: x});
           })
         
