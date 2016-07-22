@@ -57,6 +57,68 @@ class Task extends React.Component {
   }
 }
 
+class PartialProgressBar extends React.Component {
+  render() {
+    var widthPercentage = this.props.percentage;
+    var strPercentage = widthPercentage + '%';
+    return (
+      <div className={"progress-bar progress-bar-" + style} role="progressbar" style={{width:strPercentage}}>
+        tt
+      </div>
+    )
+  }
+}
+
+class CollapsedBuild extends React.Component {
+  render() {
+   /* 
+    return (
+      <div className="col-xs-2">
+        <div className="progress">
+          <div className="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style={{width:'10%'}}> 
+            40% complete
+          </div>
+        </div>
+      </div>
+    )
+   */
+
+  /*
+   * colors: success, fail, started, scheduled, inactive, purple (system error)
+   */
+    var waterfallTaskStatistics = this.props.waterfallStats;
+    console.log(waterfallTaskStatistics);
+    return (
+      <div className="col-xs-2">
+        
+        <div 
+          className="progress-bar" 
+          role="progressbar" 
+          style={{width:'85%', backgroundColor:'#ffb618'}}>
+            &nbsp; 
+        </div>
+
+        <div 
+          className="progress-bar progress-bar-warning" 
+          role="progressbar" 
+          style={{width:'15%'}}>
+            &nbsp; 
+        </div>
+
+      </div>
+    )
+/*
+    return (
+      <div className="col-xs-2">
+        {
+          
+        }
+      </div>
+    )
+   */
+  }
+}
+
 // All tasks are inactive, so we display the words "inactive build"
 class InactiveBuild extends React.Component {
   render() {
@@ -86,7 +148,11 @@ class ActiveBuild extends React.Component {
 class Build extends React.Component{
   render() {
     var currentVersion = this.props.data.versions[this.props.versionIndex];
-    
+   
+    //TODO: CHANGE THIS TO CASE ON IS COLLAPSED
+    if (true) {
+      return <CollapsedBuild />;  
+    } 
     if (currentVersion.rolled_up) {
       return <InactiveBuild />;
     }
