@@ -36,18 +36,8 @@ preProcessData(window.serverData);
 // A Task contains the information for a single task for a build, including the link to its page, and a tooltip
 class Task extends React.Component {
   render() {
-    // Used to display the correct color for each task
-    function getStatus(x){
-      if(x.status=="success" || x.status=="inactive" || x.status =="undispatched" || x.status=="failed" || x.status=="started") {
-        return x.status;
-      }
-      else {
-        return "";
-      }
-    }
-
     var href = "/task/" + this.props.task.id;
-    var status = getStatus(this.props.task);
+    var status = this.props.task.status;
 
     return (
       <div data-tooltip="tooltip placeholder" className="waterfall-box"> 
@@ -57,65 +47,47 @@ class Task extends React.Component {
   }
 }
 
+// For each type of task status, a PartialProgressBar is rendered to only show that part of the bar
+// A set of PartialProgressBars make up the entire progress bar that is shown on the Waterfall page
 class PartialProgressBar extends React.Component {
   render() {
-    var widthPercentage = this.props.percentage;
-    var strPercentage = widthPercentage + '%';
+    var percentage = (this.props.taskNum * 100) / this.props.total;
+    var strPercentage = percentage + '%';
+    var style = this.props.status;
+    
     return (
-      <div className={"progress-bar progress-bar-" + style} role="progressbar" style={{width:strPercentage}}>
-        tt
-      </div>
+      <div className={"progress-bar progress-bar-" + style} role="progressbar" style={{width:strPercentage}} />
     )
   }
 }
 
+// A CollapsedBuild contains a set of PartialProgressBars, which in turn make up a full progress bar
+// We iterate over the 6 different main types of task statuses, each of which have a different color association
 class CollapsedBuild extends React.Component {
   render() {
-   /* 
-    return (
-      <div className="col-xs-2">
-        <div className="progress">
-          <div className="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style={{width:'10%'}}> 
-            40% complete
-          </div>
-        </div>
-      </div>
-    )
-   */
+    var build = getBuildByIds(this.props.versionIndex, this.props.variantIndex, this.props.data);
+    var taskStats = build.waterfallTaskStats;
 
-  /*
-   * colors: success, fail, started, scheduled, inactive, purple (system error)
-   */
-    var waterfallTaskStatistics = this.props.waterfallStats;
-    console.log(waterfallTaskStatistics);
-    return (
-      <div className="col-xs-2">
-        
-        <div 
-          className="progress-bar" 
-          role="progressbar" 
-          style={{width:'85%', backgroundColor:'#ffb618'}}>
-            &nbsp; 
-        </div>
+    var taskTypes = [ 
+                      ["success"      , taskStats.succeeded], 
+                      ["failed"       , taskStats.failed], 
+                      ["started"      , taskStats.started], 
+                      ["system-failed"     , taskStats.timed_out],
+                      ["undispatched" , taskStats.undispatched], 
+                      ["inactive"     , taskStats.inactive]
+                    ];
 
-        <div 
-          className="progress-bar progress-bar-warning" 
-          role="progressbar" 
-          style={{width:'15%'}}>
-            &nbsp; 
-        </div>
+    var total = build.tasks.length;
 
-      </div>
-    )
-/*
     return (
-      <div className="col-xs-2">
+      <div className="height-class full-bar">
         {
-          
+          taskTypes.map((x) => {
+            return <PartialProgressBar key={x[0]} total={total} status={x[0]} taskNum={x[1]} />
+          }) 
         }
       </div>
     )
-   */
   }
 }
 
@@ -130,16 +102,28 @@ class InactiveBuild extends React.Component {
 class ActiveBuild extends React.Component {
   render() {
     var tasks = getBuildByIds(this.props.versionIndex, this.props.variantIndex, this.props.data).tasks;
-    
+    var validTasks = this.props.filters;
+
+    // If our filter is defined, we filter our list of tasks to only display certain types
+    // Currently we only filter on status, but it would be easy to filter on other task attributes
+    if (validTasks != null) {
+      tasks = _.filter(tasks, ((x) => { i
+        for (var i = 0; i < validTasks.length; i++) {
+          if (validTasks[i] === x.status) return true;
+        }
+        return false;
+      }));
+    }
+
     return (
-      <div className="col-xs-2">
+      <div className="active-build"> 
         {
           tasks.map((x) => {
             return <Task key={x.id} task={x} />
           })
         }
       </div>
-      )
+    )
   }
 }
 
@@ -148,16 +132,27 @@ class ActiveBuild extends React.Component {
 class Build extends React.Component{
   render() {
     var currentVersion = this.props.data.versions[this.props.versionIndex];
-   
-    //TODO: CHANGE THIS TO CASE ON IS COLLAPSED
-    if (true) {
-      return <CollapsedBuild />;  
-    } 
+    
     if (currentVersion.rolled_up) {
       return <InactiveBuild />;
     }
+   
+    var isCollapsed = true; //Will add switch to change isCollapsed state 
+    
+    if (isCollapsed) {
+      var tasksToShow = ['failed']; //Can be modified to show different tasks
+      return (
+        <div className="col-xs-2 height-class">
+          
+          <ActiveBuild filters={tasksToShow} data={this.props.data} versionIndex={this.props.versionIndex} variantIndex={this.props.variantIndex} />
+          
+          <CollapsedBuild data={this.props.data} versionIndex={this.props.versionIndex} variantIndex={this.props.variantIndex}/>
 
-    //We have an active build with tasks
+        </div>
+      )
+    } 
+    
+    //We have an active, uncollapsed build 
     return (
       <ActiveBuild data={this.props.data} versionIndex={this.props.versionIndex} variantIndex={this.props.variantIndex} />
     )
@@ -168,18 +163,17 @@ class Build extends React.Component{
 // of versions.
 class Variant extends React.Component{
   render() {
-    var variantDisplayName = this.props.variantDisplayName;
     var data = this.props.data;
     var variantIndex = this.props.variantIndex;
-
     var variantId = getBuildByIds(data.unrolledVersionIndex, variantIndex, data).build_variant.id;
+    
     return (
       <div className="row variant-row">
 
         {/* column of build names */}
         <div className={"col-xs-2" + " build-variant-name" + " distro-col"} > 
           <a href={"/build_variant/" + project + "/" + variantId}>
-            {variantDisplayName} 
+            {this.props.variantDisplayName} 
           </a> 
         </div>
 
@@ -201,7 +195,6 @@ class Variant extends React.Component{
 class Grid extends React.Component{
   render() {
     var data = this.props.data;
-    var xuz = data;
     return (
       <div classID="wrapper">
         {

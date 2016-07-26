@@ -179,6 +179,15 @@ h3.section-heading {
 .progress-bar-failed {
   background-color: #d9534f;
 }
+.progress-bar-inactive {
+  background-color: #ebebed;
+}
+.progress-bar-undispatched {
+  background-color: #808080;
+}
+.progress-bar-started {
+  background-color: #ffb618;
+}
 .status-label {
   width: 100%;
   font-size: 18px;
@@ -1923,7 +1932,7 @@ pre {
 .waterfall-cell {
   height: 50%;
   width: 100%;
-  padding: 4px;
+  padding: 1px;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -1933,6 +1942,12 @@ pre {
 }
 .distro-col {
   text-align: right;
+}
+.height-class {
+  height: 100%;
+}
+.active-build {
+  display: inline-block;
 }
 .version-header {
   height: auto;
@@ -1985,31 +2000,6 @@ pre {
 .githash-popover li:last-child {
   margin-bottom: 0;
 }
-.boxes {
-  width: 100%;
-  height: 100%;
-  display: inline-block;
-}
-.build-result {
-  width: 100%;
-  height: 100%;
-  display: table;
-  table-layout: fixed;
-}
-.build-summary {
-  width: 100%;
-  bottom: 100%;
-  display: table;
-  table-layout: fixed;
-  color: black;
-}
-.build-summary:hover {
-  cursor: pointer;
-  border: 1px solid #555;
-}
-.success-rolled {
-  background-color: #0ed400;
-}
 .build-summary-popover-title {
   font-size: 12px;
   overflow: hidden;
@@ -2032,10 +2022,16 @@ pre {
   height: 14px;
   width: 14px;
   border-left: 1px solid rgba(255, 255, 255, 0.75);
-  border-bottom: 2px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
 }
 .task-result:hover {
   opacity: .8;
+}
+.full-bar {
+  border-right: 1px solid rgba(255, 255, 255, 0.75);
+  border-left: 1px solid rgba(255, 255, 255, 0.75);
+  width: auto;
+  height: 14px;
 }
 .build-summary {
   height: 23px;

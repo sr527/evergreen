@@ -7,17 +7,27 @@
 .waterfall-cell {
     height: 50%;
     width: 100%;
-    padding: 4px;
+    padding: 1px;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
 }
+
+
 .variant-row {
   padding-bottom: 10px;
 }
 
 .distro-col {
  text-align: right;
+}
+
+.height-class {
+  height: 100%;
+}
+
+.active-build {
+  display: inline-block;
 }
 
 .version-header {
@@ -75,34 +85,7 @@
     margin-bottom: 0;
   }
 }
-.boxes {
-  width: 100%;
-  height: 100%;
-  display: inline-block;
-}
 
-.build-result {
-   width: 100%;
-   height: 100%;
-   display: table;
-   table-layout: fixed;
-}
-
-.build-summary {
-    width: 100%;
-    bottom: 100%;
-    display: table;
-    table-layout: fixed;
-    color: black;
-    
-    &:hover {
-        cursor: pointer;
-        border: 1px solid #555;
-    }
-}
-.success-rolled {
-    background-color: @success-text;
-}
 .build-summary-popover-title {
     font-size: 12px;
     overflow: hidden;
@@ -119,19 +102,28 @@
       border-left: 1px dotted grey;
     }
 }
+
 .waterfall-box {
   float: left;
 }
+
 .task-result{
   display: table-cell;
   height: @cell-height-minus-padding;
   width: @cell-height-minus-padding;
 
   border-left: 1px solid rgba(255,255,255,0.75);
-  border-bottom: 2px solid rgba(255,255,255,1);
+  border-bottom: 1px solid rgba(255,255,255,1);
   &:hover {
     opacity: .8;
   }
+}
+
+.full-bar {
+  border-right: 1px solid rgba(255,255,255,0.75);
+  border-left: 1px solid rgba(255,255,255,0.75);
+  width: auto;
+  height: 14px;
 }
 
 .build-summary {
