@@ -80,7 +80,7 @@ class CollapsedBuild extends React.Component {
     var total = build.tasks.length;
 
     return (
-      <div className="height-class full-bar">
+      <div className="full-bar">
         {
           taskTypes.map((x) => {
             return <PartialProgressBar key={x[0]} total={total} status={x[0]} taskNum={x[1]} />
@@ -140,9 +140,9 @@ class Build extends React.Component{
     var isCollapsed = true; //Will add switch to change isCollapsed state 
     
     if (isCollapsed) {
-      var tasksToShow = ['failed']; //Can be modified to show different tasks
+      var tasksToShow = ['failed']; //Can be modified to show combinations of tasks by statuses
       return (
-        <div className="col-xs-2 height-class">
+        <div className="col-xs-2">
           
           <ActiveBuild filters={tasksToShow} data={this.props.data} versionIndex={this.props.versionIndex} variantIndex={this.props.variantIndex} />
           
@@ -154,7 +154,9 @@ class Build extends React.Component{
     
     //We have an active, uncollapsed build 
     return (
-      <ActiveBuild data={this.props.data} versionIndex={this.props.versionIndex} variantIndex={this.props.variantIndex} />
+      <div className="col-xs-2">
+        <ActiveBuild data={this.props.data} versionIndex={this.props.versionIndex} variantIndex={this.props.variantIndex} />
+      </div>
     )
   }
 }

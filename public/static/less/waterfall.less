@@ -4,26 +4,12 @@
 @cell-height-padding: 2px;
 @cell-height-minus-padding: @cell-height - @cell-height-padding * 2;
 
-.waterfall-cell {
-    height: 50%;
-    width: 100%;
-    padding: 1px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-
-
 .variant-row {
   padding-bottom: 10px;
 }
 
 .distro-col {
  text-align: right;
-}
-
-.height-class {
-  height: 100%;
 }
 
 .active-build {
@@ -120,10 +106,7 @@
 }
 
 .full-bar {
-  border-right: 1px solid rgba(255,255,255,0.75);
-  border-left: 1px solid rgba(255,255,255,0.75);
-  width: auto;
-  height: 14px;
+  height: @cell-height-minus-padding; 
 }
 
 .build-summary {
