@@ -1930,13 +1930,22 @@ pre {
   background-color: #999;
 }
 .variant-row {
-  padding-bottom: 10px;
+  margin-bottom: 20px;
 }
 .distro-col {
   text-align: right;
+  height: 54px;
 }
 .active-build {
   display: inline-block;
+}
+.build-row {
+  background-color: #ffffff;
+  padding-bottom: 10px;
+  padding-top: 10px;
+}
+.full-grid {
+  background-color: #ff0000;
 }
 .version-header {
   height: auto;
@@ -2033,6 +2042,7 @@ pre {
   font-size: 12px;
   text-align: center;
   padding-top: 4px;
+  height: 54px;
 }
 @media (max-width: 991px) {
   .inactive-build {

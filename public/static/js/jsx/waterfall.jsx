@@ -94,7 +94,7 @@ class CollapsedBuild extends React.Component {
 // All tasks are inactive, so we display the words "inactive build"
 class InactiveBuild extends React.Component {
   render() {
-    return <div className="col-xs-2 inactive-build"> inactive build </div>;
+    return <div className="col-xs-2 inactive-build build-row"> inactive build </div>;
   }
 }
 
@@ -137,12 +137,12 @@ class Build extends React.Component{
       return <InactiveBuild />;
     }
    
-    var isCollapsed = true; //Will add switch to change isCollapsed state 
+    var isCollapsed = false; //Will add switch to change isCollapsed state 
     
     if (isCollapsed) {
       var tasksToShow = ['failed']; //Can be modified to show combinations of tasks by statuses
       return (
-        <div className="col-xs-2">
+        <div className="col-xs-2 build-row">
           
           <ActiveBuild filters={tasksToShow} data={this.props.data} versionIndex={this.props.versionIndex} variantIndex={this.props.variantIndex} />
           
@@ -154,7 +154,7 @@ class Build extends React.Component{
     
     //We have an active, uncollapsed build 
     return (
-      <div className="col-xs-2">
+      <div className="col-xs-2 build-row">
         <ActiveBuild data={this.props.data} versionIndex={this.props.versionIndex} variantIndex={this.props.variantIndex} />
       </div>
     )
@@ -171,9 +171,10 @@ class Variant extends React.Component{
     
     return (
       <div className="row variant-row">
+      <div style={{backgroundColor:'#ff0000', height:'100%'}}>
 
         {/* column of build names */}
-        <div className={"col-xs-2" + " build-variant-name" + " distro-col"} > 
+        <div className={"col-xs-2" + " build-variant-name" + " distro-col"}> 
           <a href={"/build_variant/" + project + "/" + variantId}>
             {this.props.variantDisplayName} 
           </a> 
@@ -187,6 +188,7 @@ class Variant extends React.Component{
             })
           }
         </div>
+      </div>
 
       </div>
     )
@@ -198,7 +200,7 @@ class Grid extends React.Component{
   render() {
     var data = this.props.data;
     return (
-      <div classID="wrapper">
+      <div classID="wrapper " style={{backgroundColor : '#f3f3f3'}} >
         {
           this.props.data.build_variants.map((x, i) => {
             return <Variant key={x} data={data} variantIndex={i} variantDisplayName={x} />;
