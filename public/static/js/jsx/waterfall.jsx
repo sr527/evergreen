@@ -94,7 +94,7 @@ class CollapsedBuild extends React.Component {
 // All tasks are inactive, so we display the words "inactive build"
 class InactiveBuild extends React.Component {
   render() {
-    return <div className="col-xs-2 inactive-build build-row"> inactive build </div>;
+    return <td className="inactive-build build-row"> inactive build </td>;
   }
 }
 
@@ -142,21 +142,21 @@ class Build extends React.Component{
     if (isCollapsed) {
       var tasksToShow = ['failed']; //Can be modified to show combinations of tasks by statuses
       return (
-        <div className="col-xs-2 build-row">
+        <td className="build-row">
           
           <ActiveBuild filters={tasksToShow} data={this.props.data} versionIndex={this.props.versionIndex} variantIndex={this.props.variantIndex} />
           
           <CollapsedBuild data={this.props.data} versionIndex={this.props.versionIndex} variantIndex={this.props.variantIndex}/>
 
-        </div>
+        </td>
       )
     } 
     
     //We have an active, uncollapsed build 
     return (
-      <div className="col-xs-2 build-row">
+      <td className="build-row">
         <ActiveBuild data={this.props.data} versionIndex={this.props.versionIndex} variantIndex={this.props.variantIndex} />
-      </div>
+      </td>
     )
   }
 }
@@ -170,27 +170,22 @@ class Variant extends React.Component{
     var variantId = getBuildByIds(data.unrolledVersionIndex, variantIndex, data).build_variant.id;
     
     return (
-      <div className="row variant-row">
-      <div style={{backgroundColor:'#ff0000', height:'100%'}}>
-
+      <tr className="row variant-row">
         {/* column of build names */}
-        <div className={"col-xs-2" + " build-variant-name" + " distro-col"}> 
+        <td className={   " distro-col"}> 
           <a href={"/build_variant/" + project + "/" + variantId}>
             {this.props.variantDisplayName} 
           </a> 
-        </div>
+        </td>
 
         {/* 5 columns of versions */}
-        <div> 
           {
             data.versions.map((x,i) => {
               return <Build key={x.ids[0]} data={data} variantIndex={variantIndex} versionIndex={i} />;
             })
           }
-        </div>
-      </div>
 
-      </div>
+      </tr>
     )
   }
 }
@@ -200,12 +195,14 @@ class Grid extends React.Component{
   render() {
     var data = this.props.data;
     return (
-      <div classID="wrapper " style={{backgroundColor : '#f3f3f3'}} >
+      <div classID="wrapper ">
+        <table className="table">
         {
           this.props.data.build_variants.map((x, i) => {
             return <Variant key={x} data={data} variantIndex={i} variantDisplayName={x} />;
           })
         }
+        </table>
       </div>
     )
   }

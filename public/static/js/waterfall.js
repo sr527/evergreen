@@ -94,7 +94,7 @@ class CollapsedBuild extends React.Component {
 // All tasks are inactive, so we display the words "inactive build"
 class InactiveBuild extends React.Component {
   render() {
-    return React.createElement("div", {className: "col-xs-2 inactive-build build-row"}, " inactive build ");
+    return React.createElement("td", {className: "inactive-build build-row"}, " inactive build ");
   }
 }
 
@@ -142,7 +142,7 @@ class Build extends React.Component{
     if (isCollapsed) {
       var tasksToShow = ['failed']; //Can be modified to show combinations of tasks by statuses
       return (
-        React.createElement("div", {className: "col-xs-2 build-row"}, 
+        React.createElement("td", {className: "build-row"}, 
           
           React.createElement(ActiveBuild, {filters: tasksToShow, data: this.props.data, versionIndex: this.props.versionIndex, variantIndex: this.props.variantIndex}), 
           
@@ -154,7 +154,7 @@ class Build extends React.Component{
     
     //We have an active, uncollapsed build 
     return (
-      React.createElement("div", {className: "col-xs-2 build-row"}, 
+      React.createElement("td", {className: "build-row"}, 
         React.createElement(ActiveBuild, {data: this.props.data, versionIndex: this.props.versionIndex, variantIndex: this.props.variantIndex})
       )
     )
@@ -170,25 +170,20 @@ class Variant extends React.Component{
     var variantId = getBuildByIds(data.unrolledVersionIndex, variantIndex, data).build_variant.id;
     
     return (
-      React.createElement("div", {className: "row variant-row"}, 
-      React.createElement("div", {style: {backgroundColor:'#ff0000', height:'100%'}}, 
-
+      React.createElement("tr", {className: "row variant-row"}, 
         /* column of build names */
-        React.createElement("div", {className: "col-xs-2" + " build-variant-name" + " distro-col"}, 
+        React.createElement("td", {className:    " distro-col"}, 
           React.createElement("a", {href: "/build_variant/" + project + "/" + variantId}, 
             this.props.variantDisplayName
           )
         ), 
 
         /* 5 columns of versions */
-        React.createElement("div", null, 
           
             data.versions.map((x,i) => {
               return React.createElement(Build, {key: x.ids[0], data: data, variantIndex: variantIndex, versionIndex: i});
             })
           
-        )
-      )
 
       )
     )
@@ -200,12 +195,14 @@ class Grid extends React.Component{
   render() {
     var data = this.props.data;
     return (
-      React.createElement("div", {classID: "wrapper ", style: {backgroundColor : '#f3f3f3'}}, 
+      React.createElement("div", {classID: "wrapper "}, 
+        React.createElement("table", {className: "table"}, 
         
           this.props.data.build_variants.map((x, i) => {
             return React.createElement(Variant, {key: x, data: data, variantIndex: i, variantDisplayName: x});
           })
         
+        )
       )
     )
   }
