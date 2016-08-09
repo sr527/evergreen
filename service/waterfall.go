@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -60,14 +61,13 @@ func uiStatus(task waterfallTask) string {
 type versionVariantData struct {
 	Rows          map[string]waterfallRow     `json:"rows"`
 	Versions      map[string]waterfallVersion `json:"versions"`
-	BuildVariants []waterfallBuildVariant     `json:"build_variants"`
+	BuildVariants waterfallBuildVariants      `json:"build_variants"`
 }
 
 // waterfallData is all of the data that gets sent to the waterfall page on load
 type waterfallData struct {
-	Rows              map[string]waterfallRow     `json:"rows"`
+	Rows              []waterfallRow              `json:"rows"`
 	Versions          map[string]waterfallVersion `json:"versions"`
-	BuildVariants     []waterfallBuildVariant     `json:"build_variants"`
 	TotalVersions     int                         `json:"total_versions"`      // total number of versions (for pagination)
 	CurrentSkip       int                         `json:"current_skip"`        // number of versions skipped so far
 	PreviousPageCount int                         `json:"previous_page_count"` // number of versions on previous page
@@ -146,6 +146,20 @@ type waterfallVersion struct {
 
 type waterfallVersionError struct {
 	Messages []string `json:"messages"`
+}
+
+type waterfallBuildVariants []waterfallBuildVariant
+
+func (wfbv waterfallBuildVariants) Len() int {
+	return len(wfbv)
+}
+
+func (wfbv waterfallBuildVariants) Less(i, j int) bool {
+	return wfbv[i].DisplayName < wfbv[j].DisplayName
+}
+
+func (wfbv waterfallBuildVariants) Swap(i, j int) {
+	wfbv[i], wfbv[j] = wfbv[j], wfbv[i]
 }
 
 // createWaterfallTasks takes ina  build's task cache returns a list of waterfallTasks.
@@ -238,7 +252,6 @@ func getVersionsAndVariants(skip, numVersionElements int, project *model.Project
 
 		// create the necessary versions, rolling up inactive ones
 		for _, v := range versionsFromDB {
-			fmt.Println(v.Id)
 
 			// if we have hit enough versions, break out
 			if len(finalVersions) == numVersionElements {
@@ -370,7 +383,7 @@ func getVersionsAndVariants(skip, numVersionElements int, project *model.Project
 	}
 
 	// create the list of display names for the build variants represented
-	buildVariants := []waterfallBuildVariant{}
+	buildVariants := waterfallBuildVariants{}
 	for name := range bvSet {
 		displayName := buildVariantMappings[name]
 		if displayName == "" {
@@ -558,9 +571,14 @@ func (uis *UIServer) waterfallPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	finalData.Rows = vvData.Rows
 	finalData.Versions = vvData.Versions
-	finalData.BuildVariants = vvData.BuildVariants
+
+	sort.Sort(vvData.BuildVariants)
+	rows := []waterfallRow{}
+	for _, bv := range vvData.BuildVariants {
+		rows = append(rows, vvData.Rows[bv.Id])
+	}
+	finalData.Rows = rows
 
 	// compute the total number of versions that exist
 	finalData.TotalVersions, err = version.Count(version.ByProjectId(projCtx.Project.Identifier))

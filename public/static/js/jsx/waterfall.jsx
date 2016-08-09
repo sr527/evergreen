@@ -3,11 +3,6 @@
   */
 
 
-// Preprocess the data given by the server 
-// Sort the array of builds for each version, as well as the array of build variants
-function preProcessData(data) {
-  data.build_variants = _.sortBy(data.build_variants, 'display_name');
-}
 
 // Returns string from datetime object in "5/7/96 1:15 AM" format
 // Used to display version headers
@@ -23,7 +18,6 @@ function getFormattedTime(datetimeObj) {
   return formatted_time;
 }
 
-preProcessData(window.serverData);
 
 // The Root class renders all components on the waterfall page, including the grid view and the filter and new page buttons
 // The one exception is the header, which is written in Angular and managed by menu.html
@@ -183,8 +177,8 @@ function Grid ({data, project, collapsed}) {
   return (
     <div className="waterfall-grid">
       {
-        data.build_variants.map(function(buildVariant){
-          return <Variant row={data.rows[buildVariant.id]} project={project} collapsed={collapsed} versions={data.versions} />;
+        data.rows.map(function(row){
+          return <Variant row={row} project={project} collapsed={collapsed} versions={data.versions} />;
         })
       }
     </div> 
