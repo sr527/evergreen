@@ -57,6 +57,7 @@ type APIServer struct {
 const (
 	APIServerLockTitle = evergreen.APIServerTaskActivator
 	PatchLockTitle     = "patches"
+	MaxTestLogSize     = 16 * 1024 * 1024
 )
 
 // New returns an APIServer initialized with the given settings and plugins.
@@ -469,6 +470,13 @@ func getNextDistroTask(currentTask *task.Task, host *host.Host) (
 // the test logs and storing them in the test_logs collection.
 func (as *APIServer) AttachTestLog(w http.ResponseWriter, r *http.Request) {
 	t := MustHaveTask(r)
+	// check that the test logs are not > 16MB and return an error.
+	if len(r.Body) > MaxTestLogSize {
+		sizeError :=
+			as.LoggedError(w, r, http.StatusBadRequest,
+				fmt.Errorf("size of response, %v, is greater than max test log size, %v", len(r.Body), MaxTestLogSize))
+		return
+	}
 	log := &model.TestLog{}
 	err := util.ReadJSONInto(r.Body, log)
 	if err != nil {
