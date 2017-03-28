@@ -287,7 +287,6 @@ func (apiLgr *APILogger) sendLogs(flushMsgs []model.LogMessage) int {
 	grip.CatchError(apiLgr.TaskCommunicator.Log(flushMsgs))
 	grip.Infof("sent %d log messages to api server, in %s",
 		len(flushMsgs), time.Since(start))
-
 	return len(flushMsgs)
 }
 

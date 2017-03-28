@@ -118,11 +118,9 @@ func setupTlsConfigs(t *testing.T) {
 	}
 }
 
-func createAgent(testServer *service.TestServer, testTask *task.Task, testHost *host.Host) (*Agent, error) {
+func createAgent(testServer *service.TestServer, testHost *host.Host) (*Agent, error) {
 	testAgent, err := New(Options{
 		APIURL:      testServer.URL,
-		TaskId:      testTask.Id,
-		TaskSecret:  testTask.Secret,
 		HostId:      testHost.Id,
 		HostSecret:  testHost.Secret,
 		Certificate: testConfig.Api.HttpsCert,
@@ -133,6 +131,21 @@ func createAgent(testServer *service.TestServer, testTask *task.Task, testHost *
 	testAgent.heartbeater.Interval = 10 * time.Second
 	testAgent.taskConfig = &model.TaskConfig{Expansions: &command.Expansions{}}
 	return testAgent, nil
+}
+
+func assignAgentTask(agt *Agent, testTask *task.Task) error {
+	// modify task communicator
+	httpTaskComm, ok := agt.TaskCommunicator.(*comm.HTTPCommunicator)
+	if !ok {
+		message := "error getting http communicator for agent"
+		return errors.New(message)
+	}
+
+	httpTaskComm.TaskId = testTask.Id
+	httpTaskComm.TaskSecret = testTask.Secret
+
+	agt.TaskCommunicator = httpTaskComm
+	return nil
 }
 
 func TestBasicEndpoints(t *testing.T) {
@@ -146,9 +159,10 @@ func TestBasicEndpoints(t *testing.T) {
 			testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 			defer testServer.Close()
 
-			testAgent, err := createAgent(testServer, testTask, h)
+			testAgent, err := createAgent(testServer, h)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 			defer testAgent.stop()
+			So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 
 			Convey("sending logs should store the log messages properly", func() {
 				msg1 := "task logger initialized!"
@@ -157,13 +171,12 @@ func TestBasicEndpoints(t *testing.T) {
 				testAgent.logger.LogTask(slogger.INFO, msg1)
 				testAgent.logger.LogSystem(slogger.INFO, msg2)
 				testAgent.logger.LogExecution(slogger.INFO, msg3)
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(1 * time.Second)
 				testAgent.APILogger.FlushAndWait()
 
 				// This returns logs in order of NEWEST first.
 				logMessages, err := model.FindMostRecentLogMessages(testTask.Id, 0, 10, []string{}, []string{})
 				testutil.HandleTestingErr(err, t, "failed to get log msgs")
-
 				So(logMessages[2].Message, ShouldEndWith, msg1)
 				So(logMessages[1].Message, ShouldEndWith, msg2)
 				So(logMessages[0].Message, ShouldEndWith, msg3)
@@ -230,14 +243,14 @@ func TestHeartbeatSignals(t *testing.T) {
 	setupTlsConfigs(t)
 
 	for tlsString, tlsConfig := range tlsConfigs {
-		testTask, _, h, err := setupAPITestData(testConfig, evergreen.CompileStage, "linux-64", filepath.Join(testDirectory, "testdata/config_test_plugin/project/evergreen-ci-render.yml"), NoPatch, t)
+		_, _, h, err := setupAPITestData(testConfig, evergreen.CompileStage, "linux-64", filepath.Join(testDirectory, "testdata/config_test_plugin/project/evergreen-ci-render.yml"), NoPatch, t)
 		testutil.HandleTestingErr(err, t, "Couldn't make test data: %v", err)
 
 		Convey("With a live api server, agent, and test task over "+tlsString, t, func() {
 			testServer, err := service.CreateTestServer(testConfig, tlsConfig, plugin.APIPlugins, Verbose)
 			testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 			defer testServer.Close()
-			testAgent, err := createAgent(testServer, testTask, h)
+			testAgent, err := createAgent(testServer, h)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 			defer testAgent.stop()
 
@@ -264,9 +277,11 @@ func TestAgentDirectorySuccess(t *testing.T) {
 			testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 			defer testServer.Close()
 
-			testAgent, err := createAgent(testServer, testTask, testHost)
+			testAgent, err := createAgent(testServer, testHost)
 			testutil.HandleTestingErr(err, t, "Failed to start agent")
 			defer testAgent.stop()
+
+			So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 
 			So(err, ShouldBeNil)
 			So(testAgent, ShouldNotBeNil)
@@ -312,9 +327,10 @@ func TestAgentDirectoryFailure(t *testing.T) {
 			testServer, err := service.CreateTestServer(testConfig, tlsConfig, plugin.APIPlugins, Verbose)
 			testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 			defer testServer.Close()
-			testAgent, err := createAgent(testServer, testTask, testHost)
+			testAgent, err := createAgent(testServer, testHost)
 			testutil.HandleTestingErr(err, t, "Failed to start test agent")
 
+			So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 			dir, err := os.Getwd()
 
 			testutil.HandleTestingErr(err, t, "Failed to read current directory")
@@ -371,9 +387,11 @@ func TestSecrets(t *testing.T) {
 			testServer, err := service.CreateTestServer(testConfig, tlsConfig, plugin.APIPlugins, Verbose)
 			testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 			defer testServer.Close()
-			testAgent, err := createAgent(testServer, testTask, testHost)
+			testAgent, err := createAgent(testServer, testHost)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 			defer testAgent.stop()
+
+			So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 
 			testAgent.heartbeater.Interval = 100 * time.Millisecond
 			testAgent.StartBackgroundActions(&NoopSignalHandler{})
@@ -403,9 +421,10 @@ func TestTaskSuccess(t *testing.T) {
 						testServer, err := service.CreateTestServer(testConfig, tlsConfig, plugin.APIPlugins, Verbose)
 						testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 						defer testServer.Close()
-						testAgent, err := createAgent(testServer, testTask, h)
+						testAgent, err := createAgent(testServer, h)
 						testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 						defer testAgent.stop()
+						So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 
 						// actually run the task.
 						// this function won't return until the whole thing is done.
@@ -474,9 +493,10 @@ func TestTaskSuccess(t *testing.T) {
 						testServer, err := service.CreateTestServer(testConfig, tlsConfig, plugin.APIPlugins, Verbose)
 						testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 						defer testServer.Close()
-						testAgent, err := createAgent(testServer, testTask, h)
+						testAgent, err := createAgent(testServer, h)
 						testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 						defer testAgent.stop()
+						So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 
 						// actually run the task.
 						// this function won't return until the whole thing is done.
@@ -530,9 +550,10 @@ func TestTaskFailures(t *testing.T) {
 					testServer, err := service.CreateTestServer(testConfig, tlsConfig, plugin.APIPlugins, Verbose)
 					testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 					defer testServer.Close()
-					testAgent, err := createAgent(testServer, testTask, h)
+					testAgent, err := createAgent(testServer, h)
 					testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 					defer testAgent.stop()
+					So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 
 					// actually run the task.
 					// this function won't return until the whole thing is done.
@@ -579,9 +600,9 @@ func TestTaskAbortion(t *testing.T) {
 					testServer, err := service.CreateTestServer(testConfig, tlsConfig, plugin.APIPlugins, Verbose)
 					testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 					defer testServer.Close()
-					testAgent, err := createAgent(testServer, testTask, h)
+					testAgent, err := createAgent(testServer, h)
 					testutil.HandleTestingErr(err, t, "failed to create agent: %v")
-
+					So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 					Convey("when the abort signal is triggered on the task", func() {
 						go func() {
 							// Wait for a few seconds, then switch the task to aborted!
@@ -625,9 +646,10 @@ func TestTaskTimeout(t *testing.T) {
 			testServer, err := service.CreateTestServer(testConfig, tlsConfig, plugin.APIPlugins, Verbose)
 			testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 			defer testServer.Close()
-			testAgent, err := createAgent(testServer, testTask, h)
+			testAgent, err := createAgent(testServer, h)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 
+			So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 			Convey("after the slow test runs beyond the timeout threshold", func() {
 				// actually run the task.
 				// this function won't return until the whole thing is done.
@@ -660,9 +682,10 @@ func TestFunctionVariantExclusion(t *testing.T) {
 				testServer, err := service.CreateTestServer(testConfig, tlsConfig, plugin.APIPlugins, Verbose)
 				testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 				defer testServer.Close()
-				testAgent, err := createAgent(testServer, testTask, h)
+				testAgent, err := createAgent(testServer, h)
 				testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 
+				So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 				Convey("running the task", func() {
 					testAgent.RunTask()
 					testAgent.APILogger.Flush()
@@ -691,9 +714,10 @@ func TestTaskCallbackTimeout(t *testing.T) {
 			testServer, err := service.CreateTestServer(testConfig, tlsConfig, plugin.APIPlugins, Verbose)
 			testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 			defer testServer.Close()
-			testAgent, err := createAgent(testServer, testTask, h)
+			testAgent, err := createAgent(testServer, h)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 
+			So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 			prependConfigToVersion(t, testTask.Version, "callback_timeout_secs: 1\n")
 
 			Convey("after the slow test runs beyond the timeout threshold", func() {
@@ -731,9 +755,10 @@ func TestTaskExecTimeout(t *testing.T) {
 			testServer, err := service.CreateTestServer(testConfig, tlsConfig, plugin.APIPlugins, Verbose)
 			testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 			defer testServer.Close()
-			testAgent, err := createAgent(testServer, testTask, h)
+			testAgent, err := createAgent(testServer, h)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 
+			So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 			Convey("after the slow test runs beyond the timeout threshold", func() {
 				// actually run the task.
 				// this function won't return until the whole thing is done.
@@ -766,8 +791,9 @@ func TestProjectTaskExecTimeout(t *testing.T) {
 			testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 			defer testServer.Close()
 
-			testAgent, err := createAgent(testServer, testTask, h)
+			testAgent, err := createAgent(testServer, h)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
+			So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 
 			Convey("after the slow test runs beyond the project timeout threshold", func() {
 				// actually run the task.
@@ -801,19 +827,21 @@ func TestTaskEndEndpoint(t *testing.T) {
 			testutil.HandleTestingErr(err, t, "Couldn't create apiserver: %v", err)
 			defer testServer.Close()
 
-			testAgent, err := createAgent(testServer, testTask, h)
+			testAgent, err := createAgent(testServer, h)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
+
+			So(assignAgentTask(testAgent, testTask), ShouldBeNil)
 
 			testAgent.heartbeater.Interval = 10 * time.Second
 			testAgent.StartBackgroundActions(&NoopSignalHandler{})
 
 			Convey("calling end() should update task's/host's status properly "+
 				"and start running the next task", func() {
-				subsequentTaskId := testTask.Id + "Two"
 				details := &apimodels.TaskEndDetail{Status: evergreen.TaskSucceeded}
 				taskEndResp, err := testAgent.End(details)
 				time.Sleep(1 * time.Second)
 				So(err, ShouldBeNil)
+				So(taskEndResp.ShouldExit, ShouldBeFalse)
 
 				taskUpdate, err := task.FindOne(task.ById(testTask.Id))
 				So(err, ShouldBeNil)
@@ -821,15 +849,8 @@ func TestTaskEndEndpoint(t *testing.T) {
 
 				testHost, err := host.FindOne(host.ById(testTask.HostId))
 				So(err, ShouldBeNil)
-				So(testHost.RunningTask, ShouldEqual, subsequentTaskId)
+				So(testHost.RunningTask, ShouldEqual, "")
 
-				taskUpdate, err = task.FindOne(task.ById(subsequentTaskId))
-				So(err, ShouldBeNil)
-				So(taskUpdate.Status, ShouldEqual, evergreen.TaskDispatched)
-
-				So(taskEndResp, ShouldNotBeNil)
-				So(taskEndResp.RunNext, ShouldBeTrue)
-				So(taskEndResp.TaskId, ShouldEqual, subsequentTaskId)
 			})
 		})
 	}

@@ -199,7 +199,7 @@ func TestPluginFunctions(t *testing.T) {
 			testutil.HandleTestingErr(err, t, "Couldn't set up testing server")
 			defer testServer.Close()
 
-			taskConfig, err := createTestConfig(filepath.Join(testutil.GetDirectoryOfFile(),
+			taskConfig, _, err := createTestConfig(filepath.Join(testutil.GetDirectoryOfFile(),
 				"testdata", "plugin_project_functions.yml"), t)
 			testutil.HandleTestingErr(err, t, "failed to create test config: %v", err)
 
@@ -214,7 +214,7 @@ func TestPluginFunctions(t *testing.T) {
 				}
 			})
 
-			httpCom, err := comm.NewHTTPCommunicator(testServer.URL, "mocktaskid", "mocktasksecret", "", "", "", nil)
+			httpCom, err := comm.NewHTTPCommunicator(testServer.URL, "", "", "", nil)
 			So(err, ShouldBeNil)
 			So(httpCom, ShouldNotBeNil)
 
@@ -254,14 +254,15 @@ func TestPluginExecution(t *testing.T) {
 		testutil.HandleTestingErr(err, t, "Couldn't set up testing server")
 		defer testServer.Close()
 
-		httpCom, err := comm.NewHTTPCommunicator(testServer.URL, "mocktaskid", "mocktasksecret", "", "", "", nil)
+		pluginConfigPath := filepath.Join(testutil.GetDirectoryOfFile(), "testdata", "plugin_project.yml")
+		taskConfig, testTask, err := createTestConfig(pluginConfigPath, t)
+		testutil.HandleTestingErr(err, t, "failed to create test config: %v", err)
+
+		httpCom, err := comm.NewHTTPCommunicator(testServer.URL, "", "", "", nil)
 		So(err, ShouldBeNil)
 		So(httpCom, ShouldNotBeNil)
 
-		pluginConfigPath := filepath.Join(testutil.GetDirectoryOfFile(), "testdata", "plugin_project.yml")
-		taskConfig, err := createTestConfig(pluginConfigPath, t)
-		testutil.HandleTestingErr(err, t, "failed to create test config: %v", err)
-
+		httpCom.TaskId = testTask.Id
 		logger := agentutil.NewTestLogger(slogger.StdOutAppender())
 
 		Convey("all commands in test project should execute successfully", func() {
@@ -302,13 +303,18 @@ func TestAttachLargeResults(t *testing.T) {
 		testServer, err := service.CreateTestServer(testutil.TestConfig(), nil, nil, false)
 		testutil.HandleTestingErr(err, t, "Couldn't set up testing server")
 		defer testServer.Close()
-		httpCom, err := comm.NewHTTPCommunicator(testServer.URL, "mocktaskid", "mocktasksecret", "", "", "", nil)
-		So(err, ShouldBeNil)
-		So(httpCom, ShouldNotBeNil)
-		pluginCom := &comm.TaskJSONCommunicator{"test", httpCom}
-		_, err = createTestConfig(filepath.Join(testutil.GetDirectoryOfFile(), "testdata", "plugin_project.yml"), t)
+
+		_, testTask, err := createTestConfig(filepath.Join(testutil.GetDirectoryOfFile(), "testdata", "plugin_project.yml"), t)
 		testutil.HandleTestingErr(err, t, "failed to create test config: %v", err)
 
+		httpCom, err := comm.NewHTTPCommunicator(testServer.URL, "", "", "", nil)
+		So(err, ShouldBeNil)
+		So(httpCom, ShouldNotBeNil)
+
+		httpCom.TaskId = testTask.Id
+		httpCom.TaskSecret = testTask.Secret
+
+		pluginCom := &comm.TaskJSONCommunicator{"test", httpCom}
 		Convey("a test log < 16 MB should be accepted", func() {
 			id, err := pluginCom.TaskPostTestLog(&model.TestLog{
 				Name:  "woah",
@@ -329,7 +335,38 @@ func TestAttachLargeResults(t *testing.T) {
 	})
 }
 
-func createTestConfig(filename string, t *testing.T) (*model.TaskConfig, error) {
+func TestPluginSelfRegistration(t *testing.T) {
+	Convey("Assuming the plugin collection has run its init functions", t, func() {
+		So(len(plugin.CommandPlugins), ShouldBeGreaterThan, 0)
+		nameMap := map[string]uint{}
+		// count all occurrences of a plugin name
+		for _, plugin := range plugin.CommandPlugins {
+			nameMap[plugin.Name()] = nameMap[plugin.Name()] + 1
+		}
+
+		Convey("no plugin should be present in Published more than once", func() {
+			for _, count := range nameMap {
+				So(count, ShouldEqual, 1)
+			}
+		})
+
+		Convey("some known default plugins should be present in the list", func() {
+			// These use strings instead of consts from the plugin
+			// packages, so we can avoid importing those packages
+			// and make sure the registration from plugin/config
+			// is actually happening
+			So(nameMap["attach"], ShouldEqual, 1)
+			So(nameMap["s3"], ShouldEqual, 1)
+			So(nameMap["s3Copy"], ShouldEqual, 1)
+			So(nameMap["archive"], ShouldEqual, 1)
+			So(nameMap["expansions"], ShouldEqual, 1)
+			So(nameMap["git"], ShouldEqual, 1)
+			So(nameMap["shell"], ShouldEqual, 1)
+		})
+	})
+}
+
+func createTestConfig(filename string, t *testing.T) (*model.TaskConfig, *task.Task, error) {
 	clearDataMsg := "Failed to clear test data collection"
 	testutil.HandleTestingErr(
 		db.ClearCollections(
@@ -338,12 +375,12 @@ func createTestConfig(filename string, t *testing.T) (*model.TaskConfig, error) 
 
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	testProject := &model.Project{}
 	err = yaml.Unmarshal(data, testProject)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	testProjectRef := &model.ProjectRef{
@@ -358,7 +395,7 @@ func createTestConfig(filename string, t *testing.T) (*model.TaskConfig, error) 
 
 	workDir, err := ioutil.TempDir("", "plugintest_")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	testTask := &task.Task{
@@ -387,10 +424,11 @@ func createTestConfig(filename string, t *testing.T) (*model.TaskConfig, error) 
 	testutil.HandleTestingErr(err, t, "failed to upsert project vars")
 	testDistro := &distro.Distro{Id: "linux-64", WorkDir: workDir}
 	testVersion := &version.Version{}
-	return model.NewTaskConfig(testDistro, testVersion, testProject, testTask, testProjectRef)
+	config, err := model.NewTaskConfig(testDistro, testVersion, testProject, testTask, testProjectRef)
+	return config, testTask, err
 }
 
-func setupAPITestData(taskDisplayName string, isPatch bool, t *testing.T) (*task.Task, *build.Build, error) {
+func setupAPITestData(taskDisplayName string, isPatch bool, t *testing.T) (*task.Task, *build.Build, *host.Host, error) {
 	//ignore errs here because the ns might just not exist.
 	clearDataMsg := "Failed to clear test data collection"
 
@@ -480,35 +518,4 @@ func setupAPITestData(taskDisplayName string, isPatch bool, t *testing.T) (*task
 
 	testutil.HandleTestingErr(build.Insert(), t, "failed to insert build %v")
 	return newTask, build, nil
-}
-
-func TestPluginSelfRegistration(t *testing.T) {
-	Convey("Assuming the plugin collection has run its init functions", t, func() {
-		So(len(plugin.CommandPlugins), ShouldBeGreaterThan, 0)
-		nameMap := map[string]uint{}
-		// count all occurrences of a plugin name
-		for _, plugin := range plugin.CommandPlugins {
-			nameMap[plugin.Name()] = nameMap[plugin.Name()] + 1
-		}
-
-		Convey("no plugin should be present in Published more than once", func() {
-			for _, count := range nameMap {
-				So(count, ShouldEqual, 1)
-			}
-		})
-
-		Convey("some known default plugins should be present in the list", func() {
-			// These use strings instead of consts from the plugin
-			// packages, so we can avoid importing those packages
-			// and make sure the registration from plugin/config
-			// is actually happening
-			So(nameMap["attach"], ShouldEqual, 1)
-			So(nameMap["s3"], ShouldEqual, 1)
-			So(nameMap["s3Copy"], ShouldEqual, 1)
-			So(nameMap["archive"], ShouldEqual, 1)
-			So(nameMap["expansions"], ShouldEqual, 1)
-			So(nameMap["git"], ShouldEqual, 1)
-			So(nameMap["shell"], ShouldEqual, 1)
-		})
-	})
 }
