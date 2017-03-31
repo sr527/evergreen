@@ -1,7 +1,6 @@
 package comm
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -77,7 +76,7 @@ func TestCommunicatorServerUp(t *testing.T) {
 				func(w http.ResponseWriter, req *http.Request) {
 					util.WriteJSON(&w, apimodels.TaskStartRequest{}, http.StatusOK)
 				})
-			serveMux.HandleFunc("/task/mocktaskid/end",
+			serveMux.HandleFunc("/task/mocktaskid/new_end",
 				func(w http.ResponseWriter, req *http.Request) {
 					util.WriteJSON(&w, apimodels.TaskEndResponse{}, http.StatusOK)
 				})
@@ -185,7 +184,7 @@ func TestCommunicatorServerUp(t *testing.T) {
 						util.WriteJSON(&w, apimodels.TaskEndResponse{}, http.StatusInternalServerError)
 					}
 				})
-			serveMux.HandleFunc("/task/mocktaskid/end",
+			serveMux.HandleFunc("/task/mocktaskid/new_end",
 				func(w http.ResponseWriter, req *http.Request) {
 					endCount++
 					if endCount == 3 {

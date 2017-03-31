@@ -106,26 +106,25 @@ func (mp *ManifestPlugin) ManifestLoadHandler(w http.ResponseWriter, r *http.Req
 	task := plugin.GetTask(r)
 	projectRef, err := model.FindOneProjectRef(task.Project)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("projectRef not found for project %v: %v", task.Project, err), http.StatusNotFound)
+		http.Error(w, fmt.Sprintf("projectRef not found for project %v: %v", task.Project, err), http.StatusBadRequest)
 		return
 	}
 	project, err := model.FindProject("", projectRef)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("project not found for ProjectRef %v: %v", projectRef.Identifier, err),
-			http.StatusNotFound)
+			http.StatusBadRequest)
 		return
 	}
 	if project == nil {
 		http.Error(w, fmt.Sprintf("empty project not found for ProjectRef %v: %v", projectRef.Identifier, err),
-			http.StatusNotFound)
+			http.StatusBadRequest)
 		return
 	}
-
 	// try to get the manifest
 	currentManifest, err := manifest.FindOne(manifest.ById(task.Version))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("error retrieving manifest with version id %v: %v", task.Version, err),
-			http.StatusNotFound)
+			http.StatusBadRequest)
 		return
 	}
 	if currentManifest != nil {
@@ -145,7 +144,6 @@ func (mp *ManifestPlugin) ManifestLoadHandler(w http.ResponseWriter, r *http.Req
 		ProjectName: task.Project,
 		Branch:      project.Branch,
 	}
-
 	// populate modules
 	modules := make(map[string]*manifest.Module)
 	for _, module := range project.Modules {
@@ -153,7 +151,7 @@ func (mp *ManifestPlugin) ManifestLoadHandler(w http.ResponseWriter, r *http.Req
 		gitBranch, err := thirdparty.GetBranchEvent(mp.OAuthCredentials, owner, repo, module.Branch)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error retrieving getting git branch for module %v: %v", module.Name, err),
-				http.StatusNotFound)
+				http.StatusInternalServerError)
 			return
 		}
 
@@ -169,7 +167,7 @@ func (mp *ManifestPlugin) ManifestLoadHandler(w http.ResponseWriter, r *http.Req
 	duplicate, err := newManifest.TryInsert()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("error inserting manifest for %v: %v", newManifest.ProjectName, err),
-			http.StatusNotFound)
+			http.StatusInternalServerError)
 		return
 	}
 	// if it is a duplicate, load the manifest again`
@@ -178,7 +176,7 @@ func (mp *ManifestPlugin) ManifestLoadHandler(w http.ResponseWriter, r *http.Req
 		m, err := manifest.FindOne(manifest.ById(task.Version))
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error getting latest manifest for %v: %v", newManifest.ProjectName, err),
-				http.StatusNotFound)
+				http.StatusBadRequest)
 			return
 		}
 		if m != nil {

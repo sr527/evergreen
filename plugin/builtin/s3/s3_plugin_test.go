@@ -13,7 +13,9 @@ import (
 	"github.com/evergreen-ci/evergreen/db"
 	"github.com/evergreen-ci/evergreen/model"
 	"github.com/evergreen-ci/evergreen/model/artifact"
+	"github.com/evergreen-ci/evergreen/model/host"
 	"github.com/evergreen-ci/evergreen/model/task"
+	modelutil "github.com/evergreen-ci/evergreen/model/testutil"
 	"github.com/evergreen-ci/evergreen/plugin"
 	"github.com/evergreen-ci/evergreen/plugin/plugintest"
 	"github.com/evergreen-ci/evergreen/service"
@@ -221,7 +223,8 @@ func TestS3PutAndGetSingleFile(t *testing.T) {
 			So(putCmd.ParseParams(putParams), ShouldBeNil)
 			server, err := service.CreateTestServer(conf, nil, plugin.APIPlugins, false)
 			defer server.Close()
-			httpCom := plugintest.TestAgentCommunicator("testTask", "taskSecret", server.URL)
+
+			httpCom := plugintest.TestAgentCommunicator(&modelutil.TestModelData{}, server.URL)
 			pluginCom := &comm.TaskJSONCommunicator{"s3", httpCom}
 
 			So(err, ShouldBeNil)
@@ -245,7 +248,7 @@ func TestS3PutAndGetSingleFile(t *testing.T) {
 			So(putCmd.ParseParams(putParams), ShouldBeNil)
 			server, err := service.CreateTestServer(conf, nil, plugin.APIPlugins, false)
 			defer server.Close()
-			httpCom := plugintest.TestAgentCommunicator("testTask", "taskSecret", server.URL)
+			httpCom := plugintest.TestAgentCommunicator(&modelutil.TestModelData{}, server.URL)
 			pluginCom := &comm.TaskJSONCommunicator{"s3", httpCom}
 
 			So(err, ShouldBeNil)
@@ -361,13 +364,21 @@ func TestAttachResults(t *testing.T) {
 	testBucket := "testBucket"
 	Convey("When putting to an s3 bucket", t, func() {
 		testutil.HandleTestingErr(
-			db.ClearCollections(task.Collection, artifact.Collection), t,
+			db.ClearCollections(task.Collection, artifact.Collection, host.Collection), t,
 			"error clearing test collections")
 
 		testTask := &task.Task{
-			Id: taskId,
+			Id:     taskId,
+			Secret: "secret",
 		}
-		testTask.Insert()
+		So(testTask.Insert(), ShouldBeNil)
+
+		testHost := &host.Host{
+			Id:          "hostId",
+			RunningTask: testTask.Id,
+			Secret:      "secret",
+		}
+		So(testHost.Insert(), ShouldBeNil)
 
 		conf := testutil.TestConfig()
 		testutil.ConfigureIntegrationTest(t, conf, "TestAttachResults")
@@ -375,7 +386,7 @@ func TestAttachResults(t *testing.T) {
 		defer server.Close()
 		So(err, ShouldBeNil)
 
-		httpCom := plugintest.TestAgentCommunicator(taskId, "taskSecret", server.URL)
+		httpCom := plugintest.TestAgentCommunicator(&modelutil.TestModelData{Task: testTask, Host: testHost}, server.URL)
 		pluginCom := &comm.TaskJSONCommunicator{"s3", httpCom}
 
 		s3pc := S3PutCommand{
@@ -392,6 +403,7 @@ func TestAttachResults(t *testing.T) {
 			Convey("files should each be added properly", func() {
 				entry, err := artifact.FindOne(artifact.ByTaskId(taskId))
 				So(err, ShouldBeNil)
+				So(entry, ShouldNotBeNil)
 				So(len(entry.Files), ShouldEqual, 1)
 				file := entry.Files[0]
 
@@ -406,6 +418,7 @@ func TestAttachResults(t *testing.T) {
 			Convey("file should be added properly", func() {
 				entry, err := artifact.FindOne(artifact.ByTaskId(taskId))
 				So(err, ShouldBeNil)
+				So(entry, ShouldNotBeNil)
 				So(len(entry.Files), ShouldEqual, 1)
 				file := entry.Files[0]
 
