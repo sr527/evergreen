@@ -301,6 +301,19 @@ func ByExpiredSince(time time.Time) db.Q {
 // failed to provision.
 var IsProvisioningFailure = db.Query(bson.D{{StatusKey, evergreen.HostProvisionFailed}})
 
+// ByRunningWithTimedOutLTC returns hosts that are running and either have no Last Commmunication Time
+// or have one that exists that is greater than the MaxLTCInterval duration away from the current time.
+func ByRunningWithTimedOutLCT(currentTime time.Time) db.Q {
+	cutoffTime := currentTime.Add(-MaxLCTInterval)
+	return db.Query(bson.M{
+		StatusKey: evergreen.HostRunning,
+		"$or": []bson.M{
+			{LastCommunicationTimeKey: util.ZeroTime},
+			{LastCommunicationTimeKey: bson.M{"$lte": cutoffTime}},
+		},
+	})
+}
+
 // === DB Logic ===
 
 // FindOne gets one Host for the given query.
