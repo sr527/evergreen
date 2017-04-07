@@ -161,7 +161,6 @@ func (agt *Agent) finishAndAwaitCleanup(status string) (*apimodels.EndTaskRespon
 	// this will cause it to return.
 	close(agt.signalHandler.stopBackgroundChan)
 	defer agt.cleanup()
-	defer agt.APILogger.FlushAndWait()
 	var detail *apimodels.TaskEndDetail
 	select {
 	case detail = <-agt.endChan:
@@ -196,6 +195,7 @@ func (agt *Agent) finishAndAwaitCleanup(status string) (*apimodels.EndTaskRespon
 	}
 
 	agt.logger.LogExecution(slogger.INFO, "Sending final status as: %v", detail.Status)
+	agt.APILogger.FlushAndWait()
 
 	return agt.End(detail)
 
@@ -415,6 +415,12 @@ func New(opts Options) (*Agent, error) {
 		endChan:            make(chan *apimodels.TaskEndDetail, 1),
 	}
 
+	// register plugins needed for execution
+	if err := registerPlugins(agt.Registry, plugin.CommandPlugins, agt.logger); err != nil {
+		grip.Criticalf("error registering plugins: %+v", err)
+		return nil, err
+	}
+
 	return agt, nil
 }
 
@@ -475,11 +481,6 @@ func (agt *Agent) Reset() error {
 // It returns an exit code when the agent needs to exit
 func (agt *Agent) Run() error {
 
-	// register plugins needed for execution
-	if err := registerPlugins(agt.Registry, plugin.CommandPlugins, agt.logger); err != nil {
-		grip.Criticalf("error registering plugins: %+v", err)
-		return err
-	}
 	defer agt.cleanup()
 	// this loop continues until the agent exits
 	for {

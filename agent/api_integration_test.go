@@ -130,7 +130,8 @@ func TestBasicEndpoints(t *testing.T) {
 			testAgent, err := createAgent(testServer, modelData.Host)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 			defer testAgent.stop()
-			assignAgentTask(testAgent, modelData.Task
+
+			assignAgentTask(testAgent, modelData.Task)
 
 			Convey("sending logs should store the log messages properly", func() {
 				msg1 := "task logger initialized!"
@@ -250,7 +251,7 @@ func TestAgentDirectorySuccess(t *testing.T) {
 			testutil.HandleTestingErr(err, t, "Failed to start agent")
 			defer testAgent.stop()
 
-			assignAgentTask(testAgent, modelData.Task))
+			assignAgentTask(testAgent, modelData.Task)
 
 			So(err, ShouldBeNil)
 			So(testAgent, ShouldNotBeNil)
@@ -299,7 +300,7 @@ func TestAgentDirectoryFailure(t *testing.T) {
 			testAgent, err := createAgent(testServer, modelData.Host)
 			testutil.HandleTestingErr(err, t, "Failed to start test agent")
 
-			assignAgentTask(testAgent, modelData.Task))
+			assignAgentTask(testAgent, modelData.Task)
 			dir, err := os.Getwd()
 
 			testutil.HandleTestingErr(err, t, "Failed to read current directory")
@@ -360,7 +361,7 @@ func TestSecrets(t *testing.T) {
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 			defer testAgent.stop()
 
-			assignAgentTask(testAgent, modelData.Task))
+			assignAgentTask(testAgent, modelData.Task)
 
 			testAgent.heartbeater.Interval = 100 * time.Millisecond
 			testAgent.StartBackgroundActions(&NoopSignalHandler{})
@@ -393,7 +394,7 @@ func TestTaskSuccess(t *testing.T) {
 						testAgent, err := createAgent(testServer, modelData.Host)
 						testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 						defer testAgent.stop()
-						assignAgentTask(testAgent, modelData.Task))
+						assignAgentTask(testAgent, modelData.Task)
 
 						// actually run the task.
 						// this function won't return until the whole thing is done.
@@ -466,7 +467,7 @@ func TestTaskSuccess(t *testing.T) {
 						testAgent, err := createAgent(testServer, modelData.Host)
 						testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 						defer testAgent.stop()
-						assignAgentTask(testAgent, modelData.Task))
+						assignAgentTask(testAgent, modelData.Task)
 
 						// actually run the task.
 						// this function won't return until the whole thing is done.
@@ -523,7 +524,7 @@ func TestTaskFailures(t *testing.T) {
 					testAgent, err := createAgent(testServer, modelData.Host)
 					testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 					defer testAgent.stop()
-					assignAgentTask(testAgent, modelData.Task))
+					assignAgentTask(testAgent, modelData.Task)
 
 					// actually run the task.
 					// this function won't return until the whole thing is done.
@@ -573,7 +574,7 @@ func TestTaskAbortion(t *testing.T) {
 					defer testServer.Close()
 					testAgent, err := createAgent(testServer, modelData.Host)
 					testutil.HandleTestingErr(err, t, "failed to create agent: %v")
-					assignAgentTask(testAgent, modelData.Task))
+					assignAgentTask(testAgent, modelData.Task)
 					Convey("when the abort signal is triggered on the task", func() {
 						go func() {
 							// Wait for a few seconds, then switch the task to aborted!
@@ -622,7 +623,7 @@ func TestTaskTimeout(t *testing.T) {
 			testAgent, err := createAgent(testServer, modelData.Host)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 
-			assignAgentTask(testAgent, modelData.Task))
+			assignAgentTask(testAgent, modelData.Task)
 			Convey("after the slow test runs beyond the timeout threshold", func() {
 				// actually run the task.
 				// this function won't return until the whole thing is done.
@@ -659,10 +660,11 @@ func TestFunctionVariantExclusion(t *testing.T) {
 				testAgent, err := createAgent(testServer, modelData.Host)
 				testutil.HandleTestingErr(err, t, "failed to create agent")
 
-				assignAgentTask(testAgent, modelData.Task))
+				assignAgentTask(testAgent, modelData.Task)
+				So(modelData.Host.RunningTask, ShouldEqual, modelData.Task.Id)
 				Convey("running the task", func() {
-					testAgent.RunTask()
-					testAgent.APILogger.Flush()
+					_, err := testAgent.RunTask()
+					So(err, ShouldBeNil)
 					if variant == "windows8" {
 						Convey("the variant-specific function command should run", func() {
 							So(scanLogsForTask(modelData.Task.Id, "", "variant not excluded!"), ShouldBeTrue)
@@ -692,7 +694,7 @@ func TestTaskCallbackTimeout(t *testing.T) {
 			testAgent, err := createAgent(testServer, modelData.Host)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 
-			assignAgentTask(testAgent, modelData.Task))
+			assignAgentTask(testAgent, modelData.Task)
 			prependConfigToVersion(t, modelData.Task.Version, "callback_timeout_secs: 1\n")
 
 			Convey("after the slow test runs beyond the timeout threshold", func() {
@@ -733,7 +735,7 @@ func TestTaskExecTimeout(t *testing.T) {
 			testAgent, err := createAgent(testServer, modelData.Host)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 
-			assignAgentTask(testAgent, modelData.Task))
+			assignAgentTask(testAgent, modelData.Task)
 			Convey("after the slow test runs beyond the timeout threshold", func() {
 				// actually run the task.
 				// this function won't return until the whole thing is done.
@@ -769,7 +771,8 @@ func TestProjectTaskExecTimeout(t *testing.T) {
 
 			testAgent, err := createAgent(testServer, modelData.Host)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
-			assignAgentTask(testAgent, modelData.Task))
+
+			assignAgentTask(testAgent, modelData.Task)
 
 			Convey("after the slow test runs beyond the project timeout threshold", func() {
 				// actually run the task.
@@ -807,13 +810,12 @@ func TestTaskEndEndpoint(t *testing.T) {
 			testAgent, err := createAgent(testServer, modelData.Host)
 			testutil.HandleTestingErr(err, t, "failed to create agent: %v")
 
-			assignAgentTask(testAgent, modelData.Task))
+			assignAgentTask(testAgent, modelData.Task)
 
 			testAgent.heartbeater.Interval = 10 * time.Second
 			testAgent.StartBackgroundActions(&NoopSignalHandler{})
 
-			Convey("calling end() should update task's/host's status properly "+
-				"and start running the next task", func() {
+			Convey("calling end() should update task's/host's status properly ", func() {
 				details := &apimodels.TaskEndDetail{Status: evergreen.TaskSucceeded}
 				taskEndResp, err := testAgent.End(details)
 				time.Sleep(1 * time.Second)

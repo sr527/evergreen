@@ -1,18 +1,12 @@
 package taskrunner
 
 import (
-	"testing"
-
 	"github.com/evergreen-ci/evergreen"
 	"github.com/evergreen-ci/evergreen/db"
-	"github.com/evergreen-ci/evergreen/model"
-	"github.com/evergreen-ci/evergreen/model/distro"
 	"github.com/evergreen-ci/evergreen/model/host"
-	"github.com/evergreen-ci/evergreen/model/task"
 	"github.com/evergreen-ci/evergreen/testutil"
 	"github.com/mongodb/grip"
 	"github.com/pkg/errors"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 var taskRunnerTestConf = testutil.TestConfig()

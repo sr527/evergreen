@@ -123,21 +123,29 @@ func terminateHosts(hosts []host.Host, settings *evergreen.Settings, reason stri
 }
 
 // helper to terminate a single host
-func terminateHost(host *host.Host, settings *evergreen.Settings) error {
-
+func terminateHost(h *host.Host, settings *evergreen.Settings) error {
+	// clear the running task of the host in case one has been assigned.
+	if h.RunningTask != "" {
+		grip.Warningf("Host has running task: %s. Clearing running task field for host"+
+			"before terminating.", h.RunningTask)
+		err := h.ClearRunningTask(h.RunningTask, time.Now())
+		if err != nil {
+			grip.Errorf("Error clearing running task for host: %s", h.Id)
+		}
+	}
 	// convert the host to a cloud host
-	cloudHost, err := providers.GetCloudHost(host, settings)
+	cloudHost, err := providers.GetCloudHost(h, settings)
 	if err != nil {
-		return errors.Errorf("error getting cloud host for %v: %v", host.Id, err)
+		return errors.Errorf("error getting cloud host for %v: %v", h.Id, err)
 	}
 
 	// run teardown script if we have one, sending notifications if things go awry
-	if host.Distro.Teardown != "" && host.Provisioned {
-		grip.Errorln("Running teardown script for host:", host.Id)
-		if err := runHostTeardown(host, cloudHost); err != nil {
-			grip.Errorf("Error running teardown script for %s: %+v", host.Id, err)
+	if h.Distro.Teardown != "" && h.Provisioned {
+		grip.Errorln("Running teardown script for host:", h.Id)
+		if err := runHostTeardown(h, cloudHost); err != nil {
+			grip.Errorf("Error running teardown script for %s: %+v", h.Id, err)
 			subj := fmt.Sprintf("%v Error running teardown for host %v",
-				notify.TeardownFailurePreface, host.Id)
+				notify.TeardownFailurePreface, h.Id)
 			if err := notify.NotifyAdmins(subj, err.Error(), settings); err != nil {
 				grip.Errorln("Error sending email:", err)
 			}
@@ -146,7 +154,7 @@ func terminateHost(host *host.Host, settings *evergreen.Settings) error {
 
 	// terminate the instance
 	if err := cloudHost.TerminateInstance(); err != nil {
-		return errors.Wrapf(err, "error terminating host %s", host.Id)
+		return errors.Wrapf(err, "error terminating host %s", h.Id)
 	}
 
 	return nil
